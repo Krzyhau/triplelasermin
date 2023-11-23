@@ -4,7 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "window.h"
+#include "core/window.h"
 
 void game_init(struct WindowHandler* window);
 void game_update(struct WindowHandler* window);

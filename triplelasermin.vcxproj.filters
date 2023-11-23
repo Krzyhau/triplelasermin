@@ -1,14 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="main.c" />
-    <ClCompile Include="input.c" />
-    <ClCompile Include="window.c" />
-    <ClCompile Include="display.c" />
+    <Filter Include="core">
+      <UniqueIdentifier>{d177f5b7-0162-4463-9294-8410bfb1a8bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="input.h" />
-    <ClInclude Include="window.h" />
-    <ClInclude Include="display.h" />
+    <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\core\display.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\input.c">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\window.c">
+      <Filter>core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\core\display.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\input.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\window.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

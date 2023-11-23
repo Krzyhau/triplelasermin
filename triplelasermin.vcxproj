@@ -18,6 +18,17 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\core\display.c" />
+    <ClCompile Include="src\core\input.c" />
+    <ClCompile Include="src\core\window.c" />
+    <ClCompile Include="src\main.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\core\display.h" />
+    <ClInclude Include="src\core\input.h" />
+    <ClInclude Include="src\core\window.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -133,17 +144,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="display.c" />
-    <ClCompile Include="input.c" />
-    <ClCompile Include="main.c" />
-    <ClCompile Include="window.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="display.h" />
-    <ClInclude Include="input.h" />
-    <ClInclude Include="window.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
