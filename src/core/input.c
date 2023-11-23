@@ -3,8 +3,13 @@
 #include <stdlib.h>
 
 void input_state_init(struct InputState* input) {
-    input->keyboard = malloc(255 * sizeof(enum InputKeyState));
-    input->keyboardRequests = malloc(255 * sizeof(enum InputKeyStateRequest));
+    input->keyboard = malloc(INPUT_KEY_COUNT * sizeof(enum InputKeyState));
+    input->keyboardRequests = malloc(INPUT_KEY_COUNT * sizeof(enum InputKeyStateRequest));
+
+    for (int i = 0; i < INPUT_KEY_COUNT; i++) {
+        input->keyboard[i] = KeyStateReleased;
+        input->keyboardRequests[i] = KeyStateRequestNone;
+    }
 }
 
 void input_register_key_press(struct InputState* input, uint8_t keyCode)
@@ -19,7 +24,7 @@ void input_register_key_release(struct InputState* input, uint8_t keyCode)
 
 void input_state_update(struct InputState* input)
 {
-    for (int i = 0; i < 255; i++) {
+    for (int i = 0; i < INPUT_KEY_COUNT; i++) {
         switch (input->keyboard[i]) {
             case KeyStatePressing: 
                 input->keyboard[i] = KeyStateHeld; 

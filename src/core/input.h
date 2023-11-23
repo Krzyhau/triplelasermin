@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define INPUT_KEY_COUNT 255
+
 enum InputKeyState {
     KeyStateReleased,
     KeyStatePressing,
