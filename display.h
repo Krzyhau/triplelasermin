@@ -24,6 +24,8 @@ typedef union Color {
     };
 } color_t;
 
+color_t color_scale(color_t color, float scalar);
+
 void display_init(struct Display* display, HWND handle, int pixelSize);
 void display_begin(struct Display* display);
 void display_end(struct Display* display);

@@ -74,20 +74,39 @@ void game_update(struct WindowHandler* window) {
     }
 }
 
+color_t texture_white_tile_big_generate(float ux, float uy) {
+    const color_t borderColor = (color_t){ .rgba = 0x787b79 };
+    const color_t backgroundColor = (color_t){ .rgba = 0xf0f0f1 };
+
+    float squareDistX = fabsf(fmodf(ux, 1.0f) - 0.5f) * 2.0f;
+    float squareDistY = fabsf(fmodf(uy, 1.0f) - 0.5f) * 2.0f;
+    float squareDist = fmaxf(squareDistX, squareDistY);
+
+    float gridx = fabsf(fmodf(ux * 20.0f, 1.0f) - 0.5f);
+    float gridy = fabsf(fmodf(uy * 20.0f, 1.0f) - 0.5f);
+    float grid = fabsf(gridx - gridy) * 0.3f;
+
+    squareDist = fminf(fmaxf(((squareDist - 0.97f) * 40.0f), 0.0f), 1.0f) - grid;
+
+    return (color_t) {
+        .rgba = color_scale(borderColor, squareDist).rgba + color_scale(backgroundColor, 1.0f - squareDist).rgba
+    };
+}
+
 void game_draw(struct WindowHandler* window) {
-    float d = fabsf(fmodf(window->totalTime, 2.0) - 1.0);
 
     for (int x = 0; x < window->display->width; x++) {
 
-        float d2 = fabsf(fmodf(window->totalTime + x * 0.01f, 2.0) - 1.0);
-
-        color_t color = { 
-            .r = colorTest.r * d2, 
-            .g = colorTest.g * d2, 
-            .b = colorTest.b * d2 
-        };
         for (int y = 0; y < window->display->height; y++) {
-            display_set_pixel(window->display, x, y, color);
+
+            const float tileSize = 64;
+            float tileX = (float)x / tileSize;
+            float tileY = (float)y / tileSize;
+
+            float scroll = window->totalTime * 0.2f;
+            tileX += scroll;
+
+            display_set_pixel(window->display, x, y, texture_white_tile_big_generate(tileX, tileY));
         }
     }
 }

@@ -1,4 +1,17 @@
 #include "display.h"
+#include <math.h>
+
+color_t color_scale(color_t color, float scalar) {
+    float r = (float)color.r * scalar;
+    float g = (float)color.b * scalar;
+    float b = (float)color.b * scalar;
+
+    return (color_t) {
+        .r = (uint8_t)fminf(r, 255),
+        .g = (uint8_t)fminf(g, 255),
+        .b = (uint8_t)fminf(b, 255),
+    };
+}
 
 void display_init(struct Display* display, HWND handle, int pixelSize)
 {
