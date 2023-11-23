@@ -4,6 +4,9 @@
     <Filter Include="core">
       <UniqueIdentifier>{d177f5b7-0162-4463-9294-8410bfb1a8bb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="texture">
+      <UniqueIdentifier>{cc72b78d-9acf-4b71-afb0-328fd2ffe2db}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.c" />
@@ -16,6 +19,12 @@
     <ClCompile Include="src\core\window.c">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="src\texture\texture.c">
+      <Filter>texture</Filter>
+    </ClCompile>
+    <ClCompile Include="src\texture\texture_list.c">
+      <Filter>texture</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\display.h">
@@ -26,6 +35,12 @@
     </ClInclude>
     <ClInclude Include="src\core\window.h">
       <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\texture\texture.h">
+      <Filter>texture</Filter>
+    </ClInclude>
+    <ClInclude Include="src\texture\texture_list.h">
+      <Filter>texture</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

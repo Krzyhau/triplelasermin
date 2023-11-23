@@ -74,5 +74,5 @@ void display_end(struct Display* display)
 
 void display_set_pixel(struct Display* display, int x, int y, color_t color) {
     if (x < 0 || y < 0 || x >= display->width || y >= display->height) return;
-    display->buffer[x + y * display->width] = color.rgba;
+    display->buffer[x + (display->height - 1 - y) * display->width] = color.rgba;
 }

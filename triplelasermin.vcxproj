@@ -23,11 +23,15 @@
     <ClCompile Include="src\core\input.c" />
     <ClCompile Include="src\core\window.c" />
     <ClCompile Include="src\main.c" />
+    <ClCompile Include="src\texture\texture.c" />
+    <ClCompile Include="src\texture\texture_list.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\display.h" />
     <ClInclude Include="src\core\input.h" />
     <ClInclude Include="src\core\window.h" />
+    <ClInclude Include="src\texture\texture.h" />
+    <ClInclude Include="src\texture\texture_list.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
