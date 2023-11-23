@@ -25,6 +25,8 @@
     <ClCompile Include="src\texture\texture_list.c">
       <Filter>texture</Filter>
     </ClCompile>
+    <ClCompile Include="src\world.c" />
+    <ClCompile Include="src\room.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\display.h">
@@ -42,5 +44,8 @@
     <ClInclude Include="src\texture\texture_list.h">
       <Filter>texture</Filter>
     </ClInclude>
+    <ClInclude Include="src\world.h" />
+    <ClInclude Include="src\room.h" />
+    <ClInclude Include="src\camera.h" />
   </ItemGroup>
 </Project>
