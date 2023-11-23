@@ -1,5 +1,7 @@
 #include "input.h"
 
+#include <stdlib.h>
+
 void input_state_init(struct InputState* input) {
     input->keyboard = malloc(255 * sizeof(enum InputKeyState));
     input->keyboardRequests = malloc(255 * sizeof(enum InputKeyStateRequest));

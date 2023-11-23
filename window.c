@@ -64,7 +64,7 @@ void window_set_min_max(struct WindowHandler* window, LPMINMAXINFO lpMMI) {
 }
 
 LRESULT CALLBACK window_process(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    struct WindowHandler* window = GetWindowLongPtr(hwnd, GWLP_USERDATA);
+    struct WindowHandler* window = (struct WindowHandler*) GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
     switch (msg) {
     case WM_CREATE:
