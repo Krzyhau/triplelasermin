@@ -9,7 +9,7 @@ void world_init(struct World* world, struct WorldData data) {
         room_init(&world->rooms[i], data.rooms[i]);
     }
 
-    world->camera.fovRad = 0.7853981;
+    world->camera.fovRad = 90.0f * 3.1415926535 / 180.0f;
 }
 
 void world_draw(struct World* world, struct Display* display)

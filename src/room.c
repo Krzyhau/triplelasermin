@@ -24,12 +24,12 @@ void room_project_vertices(struct Room* room, struct Camera* camera, struct Disp
         // rotate the vertex around origin (y axis)
         struct RoomVertex rotated = translated;
         float revAng = 1.570796325f - camera->rotRad;
-        rotated.x = translated.x * cosf(revAng) + translated.z * sinf(revAng);
+        rotated.x = translated.x * cosf(revAng) - translated.z * sinf(revAng);
         rotated.z = translated.x * sinf(revAng) + translated.z * cosf(revAng);
 
         // apply perspective projection to the vertex
         struct RoomVertex projected = rotated;
-        float perspFactor = tanf(camera->fovRad) * projected.z;
+        float perspFactor = tanf(camera->fovRad * 0.5f) * fmaxf(projected.z, 0.01f);
         projected.x /= perspFactor * screenRatio;
         projected.y /= perspFactor;
         projected.h /= perspFactor;
@@ -47,6 +47,7 @@ void room_draw_column(struct Room* room, struct Display* display, int x)
 {
     int wallIndex = -1;
     float wallH = 0.0f;
+    float wallTexH = 0.0f;
     int floorY = 0;
     int ceilingY = 0;
     float wallDist = 0;
@@ -59,19 +60,19 @@ void room_draw_column(struct Room* room, struct Display* display, int x)
         if (x < projVert1.x || x > projVert2.x) continue; // column not overlapping the wall
 
         // this is the one, let's calculate shit
-
         wallIndex = i;
         wallH = ((float)x - projVert1.x) / (projVert2.x - projVert1.x);
 
-        floorY = projVert1.y * (1.0f - wallH) + projVert2.y * wallH;
-        ceilingY = floorY + projVert1.h * (1.0f - wallH) + projVert2.h * wallH;
+        wallTexH = wallH;
 
         wallDist = projVert1.z * (1.0f - wallH) + projVert2.z * wallH;
+        floorY = projVert1.y * (1.0f - wallH) + projVert2.y * wallH;
+        ceilingY = floorY + projVert1.h * (1.0f - wallH) + projVert2.h * wallH;
 
         break;
     }
 
-    if (wallIndex == 0 || wallDist <= 0) {
+    if (wallIndex == -1) {
         // no wall found, clear black
         for (int y = 0; y < display->height; y++) {
             display_set_pixel(display, x, y, (color_t) {.rgba = 0});
@@ -84,7 +85,7 @@ void room_draw_column(struct Room* room, struct Display* display, int x)
     struct RoomVertex vert2 = room->data.vertices[(wallIndex + 1) % room->data.wallCount];
 
     float wallHorizontalLength = sqrtf(powf(vert2.x - vert1.x, 2.0f) + powf(vert2.z - vert1.z, 2.0f));
-    float wallX = wallHorizontalLength * wallH;
+    float wallX = wallHorizontalLength * wallTexH;
     float wallHeight = vert1.h * (1.0f - wallH) + vert2.h * wallH;
 
     floorY = fminf(floorY, display->height);
