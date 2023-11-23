@@ -5,6 +5,7 @@
 
 extern TextureSampleFunc g_textureSampleFuncs[];
 
-#define TEXTURE_WHITE_WALL 0
+#define TEXTURE_WHITE_WALL 0x00
+#define TEXTURE_BLACK_WALL 0x01
 
 #endif

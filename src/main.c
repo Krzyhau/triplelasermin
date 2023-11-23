@@ -81,14 +81,17 @@ void game_draw(struct WindowHandler* window) {
 
         for (int y = 0; y < window->display->height; y++) {
 
-            const float tileSize = 64;
+            const float tileSize = 32;
             float tileX = (float)x / tileSize;
             float tileY = (float)y / tileSize;
 
             float scroll = window->totalTime * 0.2f;
             tileX += scroll;
 
-            display_set_pixel(window->display, x, y, texture_sample(TEXTURE_WHITE_WALL, tileX, tileY));
+            srand(floorf(tileX) + floorf(tileY) * 10);
+            int texture = rand() % 2;
+
+            display_set_pixel(window->display, x, y, texture_sample(texture, tileX, tileY));
         }
     }
 }
