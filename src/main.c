@@ -27,7 +27,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         .titleName = L"tl.exe",
         .width = 1280, .height = 720,
         .minWidth = 320, .minHeight = 180,
-        .pixelSize = 8,
+        .pixelSize = 4,
         .tickTimeMs = 16,
 
         .startCallback = game_init,
