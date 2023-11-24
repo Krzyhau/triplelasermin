@@ -3,6 +3,8 @@
 #include <math.h>
 #include "texture/texture_list.h"
 
+#define CAST_MIN_DIST 0.01f
+
 void room_init(struct Room* room, struct RoomData data)
 {
     room->data = data;
@@ -29,7 +31,8 @@ void room_project_vertices(struct Room* room, struct Camera* camera, struct Disp
 
         // apply perspective projection to the vertex
         struct RoomVertex projected = rotated;
-        float perspFactor = tanf(camera->fovRad * 0.5f) * fmaxf(projected.z, 0.01f);
+        projected.z = fmaxf(projected.z, CAST_MIN_DIST);
+        float perspFactor = tanf(camera->fovRad * 0.5f) * projected.z;
         projected.x /= perspFactor * screenRatio;
         projected.y /= perspFactor;
         projected.h /= perspFactor;
@@ -58,14 +61,21 @@ void room_draw_column(struct Room* room, struct Display* display, int x)
 
         if (projVert2.x < projVert1.x) continue; // backface culling
         if (x < projVert1.x || x > projVert2.x) continue; // column not overlapping the wall
+        if (projVert1.z == CAST_MIN_DIST && projVert2.z == CAST_MIN_DIST) continue;
 
         // this is the one, let's calculate shit
         wallIndex = i;
         wallH = ((float)x - projVert1.x) / (projVert2.x - projVert1.x);
-
-        wallTexH = wallH;
-
         wallDist = projVert1.z * (1.0f - wallH) + projVert2.z * wallH;
+
+        if (projVert2.z > projVert1.z) {
+            wallTexH = powf(wallH, projVert2.z / projVert1.z);
+        }
+        else {
+            wallTexH = 1.0f - powf(1.0f - wallH, projVert1.z / projVert2.z);
+        }
+        
+
         floorY = projVert1.y * (1.0f - wallH) + projVert2.y * wallH;
         ceilingY = floorY + projVert1.h * (1.0f - wallH) + projVert2.h * wallH;
 
