@@ -11,7 +11,7 @@ void window_init(struct WindowHandler* window)
     window->lastClock = clock();
 
     WNDCLASSW wc = { 
-        .lpszClassName = window->data.className,
+        .lpszClassName = window->info.className,
         .hInstance = window->data.instance,
         .lpfnWndProc = window_process,
         .hCursor = LoadCursor(0, IDC_ARROW),
@@ -20,11 +20,11 @@ void window_init(struct WindowHandler* window)
 
     RegisterClassW(&wc);
     window->handle = CreateWindowW(
-        window->data.className, window->data.titleName,
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        (GetSystemMetrics(SM_CXSCREEN) - window->data.width) / 2,
-        (GetSystemMetrics(SM_CYSCREEN) - window->data.height) / 2,
-        window->data.width, window->data.height,
+        window->info.className, window->info.titleName,
+        WS_OVERLAPPED | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE,
+        (GetSystemMetrics(SM_CXSCREEN) - window->info.width) / 2,
+        (GetSystemMetrics(SM_CYSCREEN) - window->info.height) / 2,
+        window->info.width, window->info.height,
         NULL, NULL, window->data.instance, (LPVOID)window
     );
 
@@ -34,7 +34,7 @@ void window_init(struct WindowHandler* window)
     input_state_init(window->input);
 
     window->display = malloc(sizeof(struct Display));
-    display_init(window->display, window->handle, window->data.pixelSize);
+    display_init(window->display, window->handle, window->info.pixelSize);
 }
 
 int window_run(struct WindowHandler* window)
@@ -50,8 +50,8 @@ int window_run(struct WindowHandler* window)
 }
 
 void window_set_min_max(struct WindowHandler* window, LPMINMAXINFO lpMMI) {
-    int minWidth = window->data.minWidth;
-    int minHeight = window->data.minHeight;
+    int minWidth = window->info.minWidth;
+    int minHeight = window->info.minHeight;
 
     RECT rcClient, rcWindow;
     GetClientRect(window->handle, &rcClient);
@@ -71,7 +71,7 @@ LRESULT CALLBACK window_process(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         window = (struct WindowHandler*)((CREATESTRUCT*)lParam)->lpCreateParams;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)window);
 
-        SetTimer(hwnd, 1, window->data.tickTimeMs, 0);
+        SetTimer(hwnd, 1, window->info.tickTimeMs, 0);
 
         window->data.startCallback(window);
 
@@ -82,7 +82,7 @@ LRESULT CALLBACK window_process(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_PAINT:
         window_draw(window);
         break;
-    case WM_DESTROY:
+    case WM_CLOSE:
         window->handle = NULL;
         PostQuitMessage(0);
         return 0;

@@ -4,12 +4,11 @@
     <Filter Include="core">
       <UniqueIdentifier>{d177f5b7-0162-4463-9294-8410bfb1a8bb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="texture">
-      <UniqueIdentifier>{cc72b78d-9acf-4b71-afb0-328fd2ffe2db}</UniqueIdentifier>
+    <Filter Include="render">
+      <UniqueIdentifier>{8390b177-79b5-46e3-adbb-dfef26b9e512}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.c" />
     <ClCompile Include="src\core\display.c">
       <Filter>core</Filter>
     </ClCompile>
@@ -19,14 +18,16 @@
     <ClCompile Include="src\core\window.c">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\texture\texture.c">
-      <Filter>texture</Filter>
+    <ClCompile Include="src\render\render.c">
+      <Filter>render</Filter>
     </ClCompile>
-    <ClCompile Include="src\texture\texture_list.c">
-      <Filter>texture</Filter>
+    <ClCompile Include="src\game.c" />
+    <ClCompile Include="src\core\main.c">
+      <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\world.c" />
-    <ClCompile Include="src\room.c" />
+    <ClCompile Include="src\render\camera.c">
+      <Filter>render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\display.h">
@@ -38,14 +39,11 @@
     <ClInclude Include="src\core\window.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="src\texture\texture.h">
-      <Filter>texture</Filter>
+    <ClInclude Include="src\render\render.h">
+      <Filter>render</Filter>
     </ClInclude>
-    <ClInclude Include="src\texture\texture_list.h">
-      <Filter>texture</Filter>
+    <ClInclude Include="src\render\camera.h">
+      <Filter>render</Filter>
     </ClInclude>
-    <ClInclude Include="src\world.h" />
-    <ClInclude Include="src\room.h" />
-    <ClInclude Include="src\camera.h" />
   </ItemGroup>
 </Project>

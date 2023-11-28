@@ -4,16 +4,6 @@
 #include <windows.h>
 #include <stdint.h>
 
-struct Display {
-    HWND windowHandle;
-    int pixelSize;
-
-    int width;
-    int height;
-
-    uint32_t* buffer;
-};
-
 typedef union Color {
     uint32_t rgba;
     struct {
@@ -24,11 +14,23 @@ typedef union Color {
     };
 } color_t;
 
+struct Display {
+    HWND windowHandle;
+    int pixelSize;
+
+    int width;
+    int height;
+
+    color_t* buffer;
+};
+
 color_t color_scale(color_t color, float scalar);
+color_t color_mix(color_t color, color_t overlay);
 
 void display_init(struct Display* display, HWND handle, int pixelSize);
 void display_begin(struct Display* display);
 void display_end(struct Display* display);
-void display_set_pixel(struct Display* display, int x, int y, color_t color);
+void display_fill(struct Display* display, color_t color);
+void display_draw_pixel(struct Display* display, int x, int y, color_t color);
 
 #endif

@@ -12,12 +12,7 @@ typedef void (*StartFunc)(struct WindowHandler* window);
 typedef void (*UpdateFunc)(struct WindowHandler* window);
 typedef void (*DrawFunc)(struct WindowHandler* window);
 
-struct WindowData {
-    HINSTANCE instance;
-    HINSTANCE prevInstance;
-    PWSTR cmdLine;
-    int cmdShow;
-
+struct WindowInfo {
     LPCWSTR className;
     LPCWSTR titleName;
     int width;
@@ -26,6 +21,13 @@ struct WindowData {
     int minHeight;
     int pixelSize;
     int tickTimeMs;
+};
+
+struct WindowData {
+    HINSTANCE instance;
+    HINSTANCE prevInstance;
+    PWSTR cmdLine;
+    int cmdShow;
 
     StartFunc startCallback;
     UpdateFunc updateCallback;
@@ -34,6 +36,7 @@ struct WindowData {
 
 struct WindowHandler {
     HWND handle;
+    struct WindowInfo info;
     struct WindowData data;
 
     struct InputState* input;

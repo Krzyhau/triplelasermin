@@ -21,22 +21,18 @@
   <ItemGroup>
     <ClCompile Include="src\core\display.c" />
     <ClCompile Include="src\core\input.c" />
+    <ClCompile Include="src\core\main.c" />
     <ClCompile Include="src\core\window.c" />
-    <ClCompile Include="src\main.c" />
-    <ClCompile Include="src\room.c" />
-    <ClCompile Include="src\texture\texture.c" />
-    <ClCompile Include="src\texture\texture_list.c" />
-    <ClCompile Include="src\world.c" />
+    <ClCompile Include="src\game.c" />
+    <ClCompile Include="src\render\camera.c" />
+    <ClCompile Include="src\render\render.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\core\display.h" />
     <ClInclude Include="src\core\input.h" />
     <ClInclude Include="src\core\window.h" />
-    <ClInclude Include="src\room.h" />
-    <ClInclude Include="src\texture\texture.h" />
-    <ClInclude Include="src\texture\texture_list.h" />
-    <ClInclude Include="src\world.h" />
+    <ClInclude Include="src\render\camera.h" />
+    <ClInclude Include="src\render\render.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

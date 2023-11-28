@@ -13,6 +13,18 @@ color_t color_scale(color_t color, float scalar) {
     };
 }
 
+color_t color_mix(color_t color, color_t overlay) {
+    float a = overlay.a / 255.0;
+    float na = (1.0f - a);
+
+    return (color_t) {
+        .r = (uint8_t)(color.r * na + overlay.r * a),
+        .g = (uint8_t)(color.g * na + overlay.g * a),
+        .b = (uint8_t)(color.b * na + overlay.b * a),
+        .a = (uint8_t)(color.a * na + overlay.a * a),
+    };
+}
+
 void display_init(struct Display* display, HWND handle, int pixelSize)
 {
     display->pixelSize = pixelSize;
@@ -72,7 +84,15 @@ void display_end(struct Display* display)
     EndPaint(display->windowHandle, &ps);
 }
 
-void display_set_pixel(struct Display* display, int x, int y, color_t color) {
+void display_fill(struct Display* display, color_t color) {
+    int size = display->width * display->height;
+    for (int i = 0; i < size; i++) {
+        display->buffer[i] = color;
+    }
+}
+
+void display_draw_pixel(struct Display* display, int x, int y, color_t color) {
     if (x < 0 || y < 0 || x >= display->width || y >= display->height) return;
-    display->buffer[x + (display->height - 1 - y) * display->width] = color.rgba;
+    int index = x + (display->height - 1 - y) * display->width;
+    display->buffer[index] = color.a == 255 ? color : color_mix(display->buffer[index], color);
 }
