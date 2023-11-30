@@ -2,6 +2,7 @@
 #define __WINDOW_H__
 
 #include <windows.h>
+#include <windowsx.h>
 #include <stdint.h>
 #include <time.h>
 

@@ -9,7 +9,7 @@ void game_config(struct WindowHandler* window) {
         .width = 1280, .height = 720,
         .minWidth = 320, .minHeight = 180,
         .pixelSize = 4,
-        .tickTimeMs = 16,
+        .tickTimeMs = 10,
     };
 }
 
@@ -33,29 +33,17 @@ struct RenderLine cubeLines[12] = {
 
 void game_init(struct WindowHandler* window) {
     camera_init(&camera);
+
+    window->input->mouseLocked = InputMouseLocked;
 }
 
 void game_update(struct WindowHandler* window) {
 
     // rotation
-    float pitchDelta = 0.0f;
-    float yawDelta = 0.0f;
+    float sensitivity = 0.2f;
 
-    if (input_key_held(window->input, 'W')) {
-        pitchDelta += 1.0f;
-    }
-    if (input_key_held(window->input, 'S')) {
-        pitchDelta -= 1.0f;
-    }
-    if (input_key_held(window->input, 'A')) {
-        yawDelta += 1.0f;
-    }
-    if (input_key_held(window->input, 'D')) {
-        yawDelta -= 1.0f;
-    }
-
-    pitchDelta *= 180.0f * window->deltaTime;
-    yawDelta *= 180.0f * window->deltaTime;
+    float pitchDelta = -window->input->deltaMouseY * sensitivity;
+    float yawDelta = -window->input->deltaMouseX * sensitivity;
 
     quaternion_t pitchRot, yawRot;
     quaternion_axis_angle(pitchDelta, (vector_t) { 1.0f, 0.0f, 0.0f }, &pitchRot);
@@ -72,16 +60,16 @@ void game_update(struct WindowHandler* window) {
 
     vector_t mov = { 0.0f, 0.0f, 0.0f };
 
-    if (input_key_held(window->input, VK_UP)) {
+    if (input_key_held(window->input, 'W')) {
         vector_add(mov, forwardVec, &mov);
     }
-    if (input_key_held(window->input, VK_DOWN)) {
+    if (input_key_held(window->input, 'S')) {
         vector_sub(mov, forwardVec, &mov);
     }
-    if (input_key_held(window->input, VK_LEFT)) {
+    if (input_key_held(window->input, 'A')) {
         vector_sub(mov, rightVec, &mov);
     }
-    if (input_key_held(window->input, VK_RIGHT)) {
+    if (input_key_held(window->input, 'D')) {
         vector_add(mov, rightVec, &mov);
     }
     if (input_key_held(window->input, 'Q')) {
@@ -107,15 +95,7 @@ void game_draw(struct WindowHandler* window) {
         render_batch_add(&batch, cubeLines[i]);
     }
 
-    matrix_t worldToLocalMatrix;
-    matrix_t projectionMatrix;
-    transform_world_to_local_matrix(camera.transform, &worldToLocalMatrix);
-    camera_projection_matrix(&camera, &projectionMatrix);
-
-    matrix_t finalMatrix;
-    mat_mul(projectionMatrix, worldToLocalMatrix, &finalMatrix);
-
-    render_batch_apply_matrix(&batch, finalMatrix);
+    render_batch_project(&batch, &camera);
 
     render_batch_draw(window->display, &batch);
 }

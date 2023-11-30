@@ -19,6 +19,12 @@ void input_register_key_release(struct InputState* input, uint8_t keyCode)
     input->keyboardRequests[keyCode] = KeyStateRequestRelease;
 }
 
+void input_register_mouse_movement(struct InputState* input, int mouseX, int mouseY)
+{
+    input->realTimeMouseX = mouseX;
+    input->realTimeMouseY = mouseY;
+}
+
 void input_state_update(struct InputState* input)
 {
     for (int i = 0; i < INPUT_KEY_COUNT; i++) {
@@ -45,6 +51,11 @@ void input_state_update(struct InputState* input)
         }
         input->keyboardRequests[i] = KeyStateRequestNone;
     }
+
+    input->deltaMouseX = input->realTimeMouseX - input->mouseX;
+    input->deltaMouseY = input->realTimeMouseY - input->mouseY;
+    input->mouseX = input->realTimeMouseX;
+    input->mouseY = input->realTimeMouseY;
 }
 
 

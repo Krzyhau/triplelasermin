@@ -23,6 +23,33 @@ void render_batch_apply_matrix(struct RenderBatch* batch, const matrix_t matrix)
     }
 }
 
+void render_batch_project(struct RenderBatch* batch, struct Camera* camera)
+{
+    // transform batch with view matrix
+    matrix_t worldToLocalMatrix;
+    transform_world_to_local_matrix(camera->transform, &worldToLocalMatrix);
+    render_batch_apply_matrix(batch, worldToLocalMatrix);
+
+    // clip line
+    for (int i = 0; i < batch->currentLength; i++) {
+        struct RenderLine line = batch->lines[i];
+        if (line.a.z < camera->nearPlane && line.b.z >= camera->nearPlane) {
+            float d = (camera->nearPlane - line.b.z) / (line.a.z - line.b.z);
+            line.a.z = line.b.z * (1.0f - d) + line.a.z * d;
+        }
+        if (line.b.z < camera->nearPlane && line.a.z >= camera->nearPlane) {
+            float d = (camera->nearPlane - line.a.z) / (line.b.z - line.a.z);
+            line.b.z = line.a.z * (1.0f - d) + line.b.z * d;
+        }
+        batch->lines[i] = line;
+    }
+
+    // transform batch with projection matrix
+    matrix_t projectionMatrix;
+    camera_projection_matrix(camera, &projectionMatrix);
+    render_batch_apply_matrix(batch, projectionMatrix);
+}
+
 void render_batch_draw(struct Display* display, struct RenderBatch* batch)
 {
     for (int i = 0; i < batch->currentLength; i++) {
