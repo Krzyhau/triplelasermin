@@ -1,7 +1,7 @@
 #include "render.h"
 
 #include "../math/matrix.h"
-
+#include <math.h>
 
 void render_batch_reset(struct RenderBatch* batch)
 {
@@ -87,7 +87,15 @@ void render_line_draw(struct Display* display, struct RenderLine line)
 
     while (1)
     {
-        display_draw_pixel(display, x1, y1, line.color);
+        float t = 0.0f;
+        if (line.b.x != line.a.x) {
+            t = (x1 - line.a.x) / (line.b.x - line.a.x);
+        }
+        else if (line.b.y != line.a.y) {
+            t = (y1 - line.a.y) / (line.b.y - line.a.y);
+        }
+        float depth = line.a.z * (1.0f - t) + line.b.z * t;
+        display_draw_pixel_depth(display, x1, y1, line.color, -depth);
 
         if (x1 == x2 && y1 == y2) break;
         int err2 = 2 * err;

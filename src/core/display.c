@@ -1,5 +1,6 @@
 #include "display.h"
 #include <math.h>
+#include <float.h>
 
 color_t color_scale(color_t color, float scalar) {
     float r = (float)color.r * scalar;
@@ -28,7 +29,10 @@ color_t color_mix(color_t color, color_t overlay) {
 void display_init(struct Display* display, HWND handle, int pixelSize)
 {
     display->pixelSize = pixelSize;
-    display->buffer = 0;
+
+    display->buffer = NULL;
+    display->depthBuffer = NULL;
+
     display->windowHandle = handle;
 }
 
@@ -49,6 +53,8 @@ void display_begin(struct Display* display)
         display->height = scaledHeight;
         if (display->buffer != NULL) free(display->buffer);
         display->buffer = malloc(displaySize * sizeof(uint32_t));
+        if (display->depthBuffer != NULL) free(display->depthBuffer);
+        display->depthBuffer = malloc(displaySize * sizeof(float));
     }
 }
 
@@ -88,11 +94,23 @@ void display_fill(struct Display* display, color_t color) {
     int size = display->width * display->height;
     for (int i = 0; i < size; i++) {
         display->buffer[i] = color;
+        display->depthBuffer[i] = FLT_MAX;
     }
 }
 
 void display_draw_pixel(struct Display* display, int x, int y, color_t color) {
+    display_draw_pixel_depth(display, x, y, color, -FLT_MAX);
+}
+
+void display_draw_pixel_depth(struct Display* display, int x, int y, color_t color, float depth)
+{
     if (x < 0 || y < 0 || x >= display->width || y >= display->height) return;
     int index = x + (display->height - 1 - y) * display->width;
-    display->buffer[index] = color.a == 255 ? color : color_mix(display->buffer[index], color);
+    float currDepth = display->depthBuffer[index];
+    color_t currColor = display->buffer[index];
+    color_t primaryColor = (currDepth > depth) ? currColor : color;
+    color_t overlayColor = (currDepth > depth) ? color : currColor;
+    color_t finalColor = overlayColor.a == 255 ? overlayColor : color_mix(primaryColor, overlayColor);
+    display->buffer[index] = finalColor;
+    display->depthBuffer[index] = fminf(currDepth, depth);
 }

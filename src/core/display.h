@@ -22,6 +22,7 @@ struct Display {
     int height;
 
     color_t* buffer;
+    float* depthBuffer;
 };
 
 color_t color_scale(color_t color, float scalar);
@@ -32,5 +33,6 @@ void display_begin(struct Display* display);
 void display_end(struct Display* display);
 void display_fill(struct Display* display, color_t color);
 void display_draw_pixel(struct Display* display, int x, int y, color_t color);
+void display_draw_pixel_depth(struct Display* display, int x, int y, color_t color, float depth);
 
 #endif
