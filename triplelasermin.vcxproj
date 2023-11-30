@@ -24,6 +24,10 @@
     <ClCompile Include="src\core\main.c" />
     <ClCompile Include="src\core\window.c" />
     <ClCompile Include="src\game.c" />
+    <ClCompile Include="src\math\matrix.c" />
+    <ClCompile Include="src\math\quaternion.c" />
+    <ClCompile Include="src\math\transform.c" />
+    <ClCompile Include="src\math\vector.c" />
     <ClCompile Include="src\render\camera.c" />
     <ClCompile Include="src\render\render.c" />
   </ItemGroup>
@@ -31,6 +35,10 @@
     <ClInclude Include="src\core\display.h" />
     <ClInclude Include="src\core\input.h" />
     <ClInclude Include="src\core\window.h" />
+    <ClInclude Include="src\math\matrix.h" />
+    <ClInclude Include="src\math\quaternion.h" />
+    <ClInclude Include="src\math\transform.h" />
+    <ClInclude Include="src\math\vector.h" />
     <ClInclude Include="src\render\camera.h" />
     <ClInclude Include="src\render\render.h" />
   </ItemGroup>

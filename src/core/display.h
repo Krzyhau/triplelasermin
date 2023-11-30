@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <stdint.h>
 
-typedef union Color {
+typedef union {
     uint32_t rgba;
     struct {
         uint8_t b;

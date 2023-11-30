@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define INPUT_KEY_COUNT 255
+#define INPUT_KEY_COUNT 256
 
 enum InputKeyState {
     KeyStateReleased,
@@ -20,8 +20,8 @@ enum InputKeyStateRequest {
 };
 
 struct InputState {
-    enum InputKeyStateRequest* keyboardRequests;
-    enum InputKeyState* keyboard;
+    enum InputKeyStateRequest keyboardRequests[INPUT_KEY_COUNT];
+    enum InputKeyState keyboard[INPUT_KEY_COUNT];
 };
 
 void input_state_init(struct InputState* input);

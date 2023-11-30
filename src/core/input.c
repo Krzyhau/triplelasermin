@@ -3,9 +3,6 @@
 #include <stdlib.h>
 
 void input_state_init(struct InputState* input) {
-    input->keyboard = malloc(INPUT_KEY_COUNT * sizeof(enum InputKeyState));
-    input->keyboardRequests = malloc(INPUT_KEY_COUNT * sizeof(enum InputKeyStateRequest));
-
     for (int i = 0; i < INPUT_KEY_COUNT; i++) {
         input->keyboard[i] = KeyStateReleased;
         input->keyboardRequests[i] = KeyStateRequestNone;
@@ -51,7 +48,7 @@ void input_state_update(struct InputState* input)
 }
 
 
-enum InputKeyState input_key_state(struct InputState* input, uint8_t keyCode) 
+enum InputKeyState input_key_state(struct InputState* input, uint8_t keyCode)
 {
     return input->keyboard[keyCode];
 }

@@ -8,9 +8,9 @@
 #include "input.h"
 #include "display.h"
 
-typedef void (*StartFunc)(struct WindowHandler* window);
-typedef void (*UpdateFunc)(struct WindowHandler* window);
-typedef void (*DrawFunc)(struct WindowHandler* window);
+typedef void (*WindowStartFunc)(struct WindowHandler* window);
+typedef void (*WindowUpdateFunc)(struct WindowHandler* window);
+typedef void (*WindowDrawFunc)(struct WindowHandler* window);
 
 struct WindowInfo {
     LPCWSTR className;
@@ -29,12 +29,12 @@ struct WindowData {
     PWSTR cmdLine;
     int cmdShow;
 
-    StartFunc startCallback;
-    UpdateFunc updateCallback;
-    DrawFunc drawCallback;
+    WindowStartFunc startCallback;
+    WindowUpdateFunc updateCallback;
+    WindowDrawFunc drawCallback;
 };
 
-struct WindowHandler {
+struct WindowHandler{
     HWND handle;
     struct WindowInfo info;
     struct WindowData data;
