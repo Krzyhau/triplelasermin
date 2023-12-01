@@ -16,23 +16,32 @@ void game_config(struct WindowHandler* window) {
 struct Camera camera;
 struct RenderBatch batch;
 
-struct RenderLine cubeLines[12] = {
-    {{-1,-1,-1}, {-1,-1, 1}, {.rgba = 0xff0000ff}},
-    {{-1,-1, 1}, { 1,-1, 1}, {.rgba = 0xffffffff}},
-    {{ 1,-1, 1}, { 1,-1,-1}, {.rgba = 0xffffffff}},
-    {{ 1,-1,-1}, {-1,-1,-1}, {.rgba = 0xffff0000}},
-    {{-1, 1,-1}, {-1, 1, 1}, {.rgba = 0xffffffff}},
-    {{-1, 1, 1}, { 1, 1, 1}, {.rgba = 0xffffffff}},
-    {{ 1, 1, 1}, { 1, 1,-1}, {.rgba = 0xffffffff}},
-    {{ 1, 1,-1}, {-1, 1,-1}, {.rgba = 0xffffffff}},
-    {{-1,-1,-1}, {-1, 1,-1}, {.rgba = 0xff00ff00}},
-    {{ 1,-1,-1}, { 1, 1,-1}, {.rgba = 0xffffffff}},
-    {{-1,-1, 1}, {-1, 1, 1}, {.rgba = 0xffffffff}},
-    {{ 1,-1, 1}, { 1, 1, 1}, {.rgba = 0xffffffff}},
+struct RenderData cubeData[12] = {
+    {{{-1,-1,-1}, {-1,-1, 1}}, {.rgba = 0xff0000ff}},
+    {{{-1,-1, 1}, { 1,-1, 1}}, {.rgba = 0xffffffff}},
+    {{{ 1,-1, 1}, { 1,-1,-1}}, {.rgba = 0xffffffff}},
+    {{{ 1,-1,-1}, {-1,-1,-1}}, {.rgba = 0xffff0000}},
+    {{{-1, 1,-1}, {-1, 1, 1}}, {.rgba = 0xffffffff}},
+    {{{-1, 1, 1}, { 1, 1, 1}}, {.rgba = 0xffffffff}},
+    {{{ 1, 1, 1}, { 1, 1,-1}}, {.rgba = 0xffffffff}},
+    {{{ 1, 1,-1}, {-1, 1,-1}}, {.rgba = 0xffffffff}},
+    {{{-1,-1,-1}, {-1, 1,-1}}, {.rgba = 0xff00ff00}},
+    {{{ 1,-1,-1}, { 1, 1,-1}}, {.rgba = 0xffffffff}},
+    {{{-1,-1, 1}, {-1, 1, 1}}, {.rgba = 0xffffffff}},
+    {{{ 1,-1, 1}, { 1, 1, 1}}, {.rgba = 0xffffffff}},
+};
+
+line_t testMask[4] = {
+    {{-1,-1,-1}, {-1, 1,-1}},
+    {{-1, 1,-1}, { 1, 1,-1}},
+    {{ 1, 1,-1}, { 1,-1,-1}},
+    {{ 1,-1,-1}, {-1,-1,-1}},
 };
 
 void game_init(struct WindowHandler* window) {
     camera_init(&camera);
+
+    camera.transform.position = (vector_t){ 0.0f, 0.0f, -2.0f };
 
     window->input->mouseLocked = InputMouseLocked;
 }
@@ -91,8 +100,34 @@ void game_draw(struct WindowHandler* window) {
     camera.aspectRatio = (float)window->display->width / (float)window->display->height;
 
     render_batch_reset(&batch);
+
+    // big cube with colored axes
     for (int i = 0; i < 12; i++) {
-        render_batch_add(&batch, cubeLines[i]);
+        render_batch_add_data(&batch, cubeData[i]);
+    }
+
+    // make a small spinning yellow cube in the middle
+    quaternion_t pitchCubeRot, yawCubeRot, cubeRot;
+    quaternion_axis_angle(window->totalTime * 50.0f, (vector_t) { 1.0f, 0.0f, 0.0f }, &pitchCubeRot);
+    quaternion_axis_angle(window->totalTime * 50.0f, (vector_t) { 0.0f, 1.0f, 0.0f }, &yawCubeRot);
+    quaternion_multiply(pitchCubeRot, yawCubeRot, &cubeRot);
+
+    matrix_t rotation_matrix;
+    mat_rotate(cubeRot, &rotation_matrix);
+
+
+    for (int i = 0; i < 12; i++) {
+        struct RenderData data = cubeData[i];
+        vector_scale(data.line.a, 0.5f, &data.line.a);
+        vector_scale(data.line.b, 0.5f, &data.line.b);
+        mat_transform_point(rotation_matrix, data.line.a, &data.line.a);
+        mat_transform_point(rotation_matrix, data.line.b, &data.line.b);
+        data.color = (color_t){ .rgba = 0xffffff00 };
+        render_batch_add_data(&batch, data);
+    }
+
+    for (int i = 0; i < 4; i++) {
+        render_batch_add_mask_line(&batch, testMask[i]);
     }
 
     render_batch_project(&batch, &camera);
