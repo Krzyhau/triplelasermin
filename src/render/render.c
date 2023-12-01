@@ -35,10 +35,14 @@ void render_batch_project(struct RenderBatch* batch, struct Camera* camera)
         struct RenderLine line = batch->lines[i];
         if (line.a.z < camera->nearPlane && line.b.z >= camera->nearPlane) {
             float d = (camera->nearPlane - line.b.z) / (line.a.z - line.b.z);
+            line.a.x = line.b.x * (1.0f - d) + line.a.x * d;
+            line.a.y = line.b.y * (1.0f - d) + line.a.y * d;
             line.a.z = line.b.z * (1.0f - d) + line.a.z * d;
         }
         if (line.b.z < camera->nearPlane && line.a.z >= camera->nearPlane) {
             float d = (camera->nearPlane - line.a.z) / (line.b.z - line.a.z);
+            line.b.x = line.a.x * (1.0f - d) + line.b.x * d;
+            line.b.y = line.a.y * (1.0f - d) + line.b.y * d;
             line.b.z = line.a.z * (1.0f - d) + line.b.z * d;
         }
         batch->lines[i] = line;
@@ -55,12 +59,7 @@ void render_batch_draw(struct Display* display, struct RenderBatch* batch)
     for (int i = 0; i < batch->currentLength; i++) {
         struct RenderLine line = batch->lines[i];
 
-        if (line.a.w > -0.001f) {
-            line.a.w = -0.001f;
-        }
-        if (line.b.w > -0.001f) {
-            line.b.w = -0.001f;
-        }
+        if (line.a.w >= 0 || line.b.w >= 0) continue;
 
         // translate into a screen space
         line.a.x = (1.0f - line.a.x / line.a.w) * 0.5f * display->width;
