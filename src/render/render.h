@@ -6,7 +6,7 @@
 #include "../math/matrix.h"
 #include "camera.h"
 
-#define RENDER_BATCH_MAX_DATA 1024
+#define RENDER_BATCH_MAX_DATA 4096
 #define RENDER_MASK_MAX_LINES 1024
 
 typedef struct {

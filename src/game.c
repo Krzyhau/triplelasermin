@@ -106,25 +106,35 @@ void game_draw(struct WindowHandler* window) {
         render_batch_add_data(&batch, cubeData[i]);
     }
 
-    // make a small spinning yellow cube in the middle
-    quaternion_t pitchCubeRot, yawCubeRot, cubeRot;
-    quaternion_axis_angle(window->totalTime * 50.0f, (vector_t) { 1.0f, 0.0f, 0.0f }, &pitchCubeRot);
-    quaternion_axis_angle(window->totalTime * 50.0f, (vector_t) { 0.0f, 1.0f, 0.0f }, &yawCubeRot);
-    quaternion_multiply(pitchCubeRot, yawCubeRot, &cubeRot);
+    for (int c = 0; c < 90; c++) {
+        // make a small spinning yellow cube in the middle
+        quaternion_t pitchCubeRot, yawCubeRot, cubeRot;
+        quaternion_axis_angle(window->totalTime * 50.0f + c, (vector_t) { 1.0f, 0.0f, 0.0f }, & pitchCubeRot);
+        quaternion_axis_angle(window->totalTime * 50.0f + c, (vector_t) { 0.0f, 1.0f, 0.0f }, & yawCubeRot);
+        quaternion_multiply(pitchCubeRot, yawCubeRot, &cubeRot);
 
-    matrix_t rotation_matrix;
-    mat_rotate(cubeRot, &rotation_matrix);
+        matrix_t rotation_matrix;
+        mat_rotate(cubeRot, &rotation_matrix);
 
+        color_t color = {
+            .r = (c / 90.0f) * 255,
+            .g = 255,
+            .b = 255 - (c / 90.0f) * 255,
+            .a = 128
+        };
 
-    for (int i = 0; i < 12; i++) {
-        struct RenderData data = cubeData[i];
-        vector_scale(data.line.a, 0.5f, &data.line.a);
-        vector_scale(data.line.b, 0.5f, &data.line.b);
-        mat_transform_point(rotation_matrix, data.line.a, &data.line.a);
-        mat_transform_point(rotation_matrix, data.line.b, &data.line.b);
-        data.color = (color_t){ .rgba = 0xffffff00 };
-        render_batch_add_data(&batch, data);
+        for (int i = 0; i < 12; i++) {
+            struct RenderData data = cubeData[i];
+            vector_scale(data.line.a, 0.5f, &data.line.a);
+            vector_scale(data.line.b, 0.5f, &data.line.b);
+            mat_transform_point(rotation_matrix, data.line.a, &data.line.a);
+            mat_transform_point(rotation_matrix, data.line.b, &data.line.b);
+            data.color = color;
+            render_batch_add_data(&batch, data);
+        }
     }
+
+    
 
     for (int i = 0; i < 4; i++) {
         render_batch_add_mask_line(&batch, testMask[i]);

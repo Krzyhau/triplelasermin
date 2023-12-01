@@ -142,6 +142,12 @@ void render_batch_screen_space_pass(struct RenderBatch* batch, struct Display* d
         render_line_screen_space_pass(display, batch->mask.lines[i], &batch->mask.lines[i]);
     }
 
+    // adding screen edges as mask
+    render_batch_add_mask_line(batch, (line_t) { {0, 0}, { display->width, 0 } });
+    render_batch_add_mask_line(batch, (line_t) { {display->width, 0}, { display->width, display->height } });
+    render_batch_add_mask_line(batch, (line_t) { { display->width, display->height }, { 0, display->height } });
+    render_batch_add_mask_line(batch, (line_t) { {0, display->height}, { 0, 0 } });
+
     // mask lines after screen space conversion
     for (int i = 0; i < batch->dataCount; i++) {
         render_mask_line(&batch->mask, batch->data[i].line, &batch->data[i].line);
@@ -199,11 +205,12 @@ void render_batch_draw(struct Display* display, struct RenderBatch* batch)
 void render_line_draw(struct Display* display, struct RenderData data)
 {
     line_t line = data.line;
+    if (line.a.x == line.b.x && line.a.y == line.b.y) return;
 
-    int x1 = data.line.a.x;
-    int y1 = data.line.a.y;
-    int x2 = data.line.b.x;
-    int y2 = data.line.b.y;
+    int x1 = line.a.x;
+    int y1 = line.a.y;
+    int x2 = line.b.x;
+    int y2 = line.b.y;
 
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
