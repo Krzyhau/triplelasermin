@@ -41,6 +41,7 @@
     <ClInclude Include="src\math\vector.h" />
     <ClInclude Include="src\render\camera.h" />
     <ClInclude Include="src\render\render.h" />
+    <ClInclude Include="src\world.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

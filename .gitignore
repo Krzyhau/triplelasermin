@@ -396,3 +396,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Blender backup files
+*.blend1
+
+# Built asset files
+assets/*.h

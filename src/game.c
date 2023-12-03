@@ -2,6 +2,8 @@
 #include "render/render.h"
 #include "render/camera.h"
 
+#include "../assets/map.h"
+
 void game_config(struct WindowHandler* window) {
     window->info = (struct WindowInfo){
         .className = L"tl.exe",
@@ -14,29 +16,6 @@ void game_config(struct WindowHandler* window) {
 }
 
 struct Camera camera;
-struct RenderBatch batch;
-
-struct RenderData cubeData[12] = {
-    {{{-1,-1,-1}, {-1,-1, 1}}, {.rgba = 0xff0000ff}},
-    {{{-1,-1, 1}, { 1,-1, 1}}, {.rgba = 0xffffffff}},
-    {{{ 1,-1, 1}, { 1,-1,-1}}, {.rgba = 0xffffffff}},
-    {{{ 1,-1,-1}, {-1,-1,-1}}, {.rgba = 0xffff0000}},
-    {{{-1, 1,-1}, {-1, 1, 1}}, {.rgba = 0xffffffff}},
-    {{{-1, 1, 1}, { 1, 1, 1}}, {.rgba = 0xffffffff}},
-    {{{ 1, 1, 1}, { 1, 1,-1}}, {.rgba = 0xffffffff}},
-    {{{ 1, 1,-1}, {-1, 1,-1}}, {.rgba = 0xffffffff}},
-    {{{-1,-1,-1}, {-1, 1,-1}}, {.rgba = 0xff00ff00}},
-    {{{ 1,-1,-1}, { 1, 1,-1}}, {.rgba = 0xffffffff}},
-    {{{-1,-1, 1}, {-1, 1, 1}}, {.rgba = 0xffffffff}},
-    {{{ 1,-1, 1}, { 1, 1, 1}}, {.rgba = 0xffffffff}},
-};
-
-line_t testMask[4] = {
-    {{-1,-1,-1}, {-1, 1,-1}},
-    {{-1, 1,-1}, { 1, 1,-1}},
-    {{ 1, 1,-1}, { 1,-1,-1}},
-    {{ 1,-1,-1}, {-1,-1,-1}},
-};
 
 void game_init(struct WindowHandler* window) {
     camera_init(&camera);
@@ -99,48 +78,89 @@ void game_draw(struct WindowHandler* window) {
 
     camera.aspectRatio = (float)window->display->width / (float)window->display->height;
 
-    render_batch_reset(&batch);
+    struct WorldData* world = &g_world;
 
-    // big cube with colored axes
-    for (int i = 0; i < 12; i++) {
-        render_batch_add_data(&batch, cubeData[i]);
+    // find the first room to render with camera position and bounds
+    int startingRoom = world->roomCount;
+    vector_t cp = camera.transform.position;
+    while (--startingRoom >= 0) {
+        int boundId = world->rooms[startingRoom].boundsCount;
+        while (--boundId >= 0) {
+            vector_t bound = world->rooms[startingRoom].bounds[boundId];
+            float dist = bound.x * cp.x + bound.y * cp.y + bound.z * cp.z - bound.w;
+            if (dist < 0) break;
+        }
+        if (boundId < 0)  break;
     }
 
-    for (int c = 0; c < 90; c++) {
-        // make a small spinning yellow cube in the middle
-        quaternion_t pitchCubeRot, yawCubeRot, cubeRot;
-        quaternion_axis_angle(window->totalTime * 50.0f + c, (vector_t) { 1.0f, 0.0f, 0.0f }, & pitchCubeRot);
-        quaternion_axis_angle(window->totalTime * 50.0f + c, (vector_t) { 0.0f, 1.0f, 0.0f }, & yawCubeRot);
-        quaternion_multiply(pitchCubeRot, yawCubeRot, &cubeRot);
+    // generate room masks lookups for batches by travelling from the main room
+    uint32_t roomsProcessed = 0;
+    uint32_t roomsToProcess = 0;
+    uint32_t portalsLookup[WORLD_ROOMS_MAX_COUNT] = { 0 };
+    uint32_t reversePortalsLookup[WORLD_ROOMS_MAX_COUNT] = { 0 };
 
-        matrix_t rotation_matrix;
-        mat_rotate(cubeRot, &rotation_matrix);
+    if (startingRoom >= 0) {
+        roomsToProcess |= (1 << startingRoom);
+    }
+    while (roomsToProcess) {
+        for (int i = 0; i < world->roomCount; i++) {
+            if ((roomsToProcess & (1 << i)) == 0) continue;
+            roomsToProcess &= ~(1 << i);
+            if ((roomsProcessed & (1 << i)) != 0) continue;
+            roomsProcessed |= (1 << i);
+            
+            for (int j = 0; j < world->portalsCount; j++) {
+                struct WorldPortalData* portal = &world->portals[j];
+                if (portal->roomFrom == i && (roomsProcessed & (1 << portal->roomTo)) == 0) {
+                    portalsLookup[portal->roomTo] = portalsLookup[i] | (1 << j);
+                    roomsToProcess |= (1 << portal->roomTo);
+                }
+                else if (portal->roomTo == i && (roomsProcessed & (1 << portal->roomFrom)) == 0) {
+                    reversePortalsLookup[portal->roomFrom] = portalsLookup[i] | (1 << j);
+                    roomsToProcess |= (1 << portal->roomFrom);
+                }
+            }
 
-        color_t color = {
-            .r = (c / 90.0f) * 255,
-            .g = 255,
-            .b = 255 - (c / 90.0f) * 255,
-            .a = 128
-        };
-
-        for (int i = 0; i < 12; i++) {
-            struct RenderData data = cubeData[i];
-            vector_scale(data.line.a, 0.5f, &data.line.a);
-            vector_scale(data.line.b, 0.5f, &data.line.b);
-            mat_transform_point(rotation_matrix, data.line.a, &data.line.a);
-            mat_transform_point(rotation_matrix, data.line.b, &data.line.b);
-            data.color = color;
-            render_batch_add_data(&batch, data);
         }
     }
 
-    
+    // render all rooms
 
-    for (int i = 0; i < 4; i++) {
-        render_batch_add_mask_line(&batch, testMask[i]);
+    struct RenderBatch batch;
+
+    for (int i = 0; i < world->roomCount;i++) {
+        render_batch_reset(&batch);
+
+        // generate masks based on previously made lookups
+        for (int j = 0; j < world->portalsCount; j++) {
+            struct WorldPortalData* portal = &world->portals[j];
+            uint8_t portalState = portalsLookup[i] & (1 << j);
+            uint8_t reversePortalState = reversePortalsLookup[i] & (1 << j);
+            if (portalState == 0 && reversePortalState == 0) continue;
+            for (int k = 0; k < portal->verticesCount; k++) {
+                vector_t p1 = portal->vertices[k];
+                vector_t p2 = portal->vertices[(k + 1) % portal->verticesCount];
+
+                if (reversePortalState) {
+                    render_batch_add_mask_line(&batch, (line_t) { p1, p2 });
+                }
+                if (portalState) {
+                    render_batch_add_mask_line(&batch, (line_t) { p2, p1 });
+                }
+            }
+        }
+
+        // add all lines
+        for (int j = 0; j < world->rooms[i].linesCount; j++) {
+            struct RenderData data = {
+                .color = (color_t){.rgba = 0xffffffff},
+                .line = world->rooms[i].lines[j]
+            };
+            render_batch_add_data(&batch, data);
+        }
+
+        // project and render
+        render_batch_project(&batch, &camera);
+        render_batch_draw(window->display, &batch);
     }
-
-    render_batch_project(&batch, &camera);
-
-    render_batch_draw(window->display, &batch);
 }

@@ -72,5 +72,6 @@
     <ClInclude Include="src\math\transform.h">
       <Filter>math</Filter>
     </ClInclude>
+    <ClInclude Include="src\world.h" />
   </ItemGroup>
 </Project>
