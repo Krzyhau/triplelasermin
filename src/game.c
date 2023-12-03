@@ -79,10 +79,10 @@ void game_draw(struct WindowHandler* window) {
     camera.aspectRatio = (float)window->display->width / (float)window->display->height;
 
     struct WorldData* world = &g_world;
+    vector_t cp = camera.transform.position;
 
     // find the first room to render with camera position and bounds
     int startingRoom = world->roomCount;
-    vector_t cp = camera.transform.position;
     while (--startingRoom >= 0) {
         int boundId = world->rooms[startingRoom].boundsCount;
         while (--boundId >= 0) {
@@ -92,69 +92,76 @@ void game_draw(struct WindowHandler* window) {
         }
         if (boundId < 0)  break;
     }
-
-    // generate room masks lookups for batches by travelling from the main room
-    uint32_t roomsProcessed = 0;
-    uint32_t roomsToProcess = 0;
-    uint32_t portalsLookup[WORLD_ROOMS_MAX_COUNT] = { 0 };
-    uint32_t reversePortalsLookup[WORLD_ROOMS_MAX_COUNT] = { 0 };
-
-    if (startingRoom >= 0) {
-        roomsToProcess |= (1 << startingRoom);
-    }
-    while (roomsToProcess) {
-        for (int i = 0; i < world->roomCount; i++) {
-            if ((roomsToProcess & (1 << i)) == 0) continue;
-            roomsToProcess &= ~(1 << i);
-            if ((roomsProcessed & (1 << i)) != 0) continue;
-            roomsProcessed |= (1 << i);
-            
-            for (int j = 0; j < world->portalsCount; j++) {
-                struct WorldPortalData* portal = &world->portals[j];
-                if (portal->roomFrom == i && (roomsProcessed & (1 << portal->roomTo)) == 0) {
-                    portalsLookup[portal->roomTo] = portalsLookup[i] | (1 << j);
-                    roomsToProcess |= (1 << portal->roomTo);
-                }
-                else if (portal->roomTo == i && (roomsProcessed & (1 << portal->roomFrom)) == 0) {
-                    reversePortalsLookup[portal->roomFrom] = portalsLookup[i] | (1 << j);
-                    roomsToProcess |= (1 << portal->roomFrom);
-                }
-            }
-
+    if (startingRoom < 0) return;
+    
+    // figure out which portals we can render through
+    uint32_t portalDirectionsFlag = 0;
+    for (int i = 0; i < world->portalsCount; i++) {
+        vector_t mask = world->portals[i].plane;
+        float dist = mask.x * cp.x + mask.y * cp.y + mask.z * cp.z - mask.w;
+        if (dist > 0) {
+            portalDirectionsFlag |= (1 << i);
         }
     }
 
-    // render all rooms
+    // prepare render states - propagate from the first room
+    int propagationSteps = 1;
+    int roomPropagationList[WORLD_ROOMS_MAX_PROPAGATION] = { 0 };
+    uint32_t portalMaskPropagationList[WORLD_ROOMS_MAX_PROPAGATION] = { 0 };
+    roomPropagationList[0] = startingRoom;
 
+    for (int i = 0; i < propagationSteps; i++) {
+        int room = roomPropagationList[i];
+        uint32_t roomMask = portalMaskPropagationList[i];
+
+        for (int portalId = 0; portalId < world->portalsCount; portalId++) {
+            struct WorldPortalData* portal = &world->portals[portalId];
+            if (portal->roomFrom != room && portal->roomTo != room) continue;
+
+            // make sure this is a portal which propagates further in rendering
+            int neededDirection = (portal->roomFrom == room) ? 1 : 0;
+            int portalDirection = ((portalDirectionsFlag & (1 << portalId)) > 0) ? 1 : 0;
+            if (portalDirection != neededDirection) continue;
+
+            int passedToRoomId = (portal->roomTo == room) ? portal->roomFrom : portal->roomTo;
+
+            if (propagationSteps >= WORLD_ROOMS_MAX_PROPAGATION) break;
+
+            roomPropagationList[propagationSteps] = passedToRoomId;
+            portalMaskPropagationList[propagationSteps] = roomMask | (1 << portalId);
+            propagationSteps++;
+        }
+
+        if (propagationSteps >= WORLD_ROOMS_MAX_PROPAGATION) break;
+    }
+
+
+    // render propagation data
     struct RenderBatch batch;
 
-    for (int i = 0; i < world->roomCount;i++) {
+    for (int i = 0; i < propagationSteps;i++) {
         render_batch_reset(&batch);
 
-        // generate masks based on previously made lookups
-        for (int j = 0; j < world->portalsCount; j++) {
-            struct WorldPortalData* portal = &world->portals[j];
-            uint8_t portalState = portalsLookup[i] & (1 << j);
-            uint8_t reversePortalState = reversePortalsLookup[i] & (1 << j);
-            if (portalState == 0 && reversePortalState == 0) continue;
-            for (int k = 0; k < portal->verticesCount; k++) {
-                vector_t p1 = portal->vertices[k];
-                vector_t p2 = portal->vertices[(k + 1) % portal->verticesCount];
+        int room = roomPropagationList[i];
+        uint32_t roomMask = portalMaskPropagationList[i];
 
-                if (reversePortalState) {
-                    render_batch_add_mask_line(&batch, (line_t) { p1, p2 });
-                }
-                if (portalState) {
-                    render_batch_add_mask_line(&batch, (line_t) { p2, p1 });
-                }
+        // generate masks based on previously made flag masks
+        for (int portalId = 0; portalId < world->portalsCount; portalId++) {
+            if ((roomMask & (1 << portalId)) == 0) continue;
+            int reversed = (portalDirectionsFlag & (1 << portalId));
+            struct WorldPortalData* portal = &world->portals[portalId];
+            for (int vert = 0; vert < portal->verticesCount; vert++) {
+                vector_t p1 = portal->vertices[vert];
+                vector_t p2 = portal->vertices[(vert + 1) % portal->verticesCount];
+                render_batch_add_mask_line(&batch, (reversed) ? (line_t) {p2, p1} : (line_t) {p1, p2});
             }
         }
 
         // add all lines
-        for (int j = 0; j < world->rooms[i].linesCount; j++) {
+        for (int line = 0; line < world->rooms[room].linesCount; line++) {
             struct RenderData data = {
                 .color = (color_t){.rgba = 0xffffffff},
-                .line = world->rooms[i].lines[j]
+                .line = world->rooms[room].lines[line]
             };
             render_batch_add_data(&batch, data);
         }
