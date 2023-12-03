@@ -153,7 +153,8 @@ void game_draw(struct WindowHandler* window) {
             for (int vert = 0; vert < portal->verticesCount; vert++) {
                 vector_t p1 = portal->vertices[vert];
                 vector_t p2 = portal->vertices[(vert + 1) % portal->verticesCount];
-                render_batch_add_mask_line(&batch, (reversed) ? (line_t) {p2, p1} : (line_t) {p1, p2});
+                line_t maskLine = (reversed) ? (line_t) { p2, p1 } : (line_t) { p1, p2 };
+                render_batch_add_mask_line_group(&batch, maskLine, portalId);
             }
         }
 

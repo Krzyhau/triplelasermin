@@ -5,10 +5,20 @@
 
 void render_mask_line(struct RenderMask* mask, const line_t line, line_t* out)
 {
+    int linesInGroup[RENDER_MASK_MAX_LINES] = { 0 };
+    int groupBehindZCount[RENDER_MASK_MAX_LINES] = { 0 };
+    int maxGroup = 0;
+
     line_t maskedLine = line;
     for (int i = 0; i < mask->count; i++) {
+        int group = mask->group[i];
+        maxGroup = max(maxGroup, group);
+        linesInGroup[group]++;
         line_t maskLine = mask->lines[i];
-        if (maskLine.a.z < 0 && maskLine.b.z < 0) continue;
+        if (maskLine.a.z < 0 && maskLine.b.z < 0) {
+            groupBehindZCount[group]++;
+            continue;
+        }
         vector_t maskLineTangent;
         vector_sub(maskLine.b, maskLine.a, &maskLineTangent);
         vector_norm(maskLineTangent, &maskLineTangent);
@@ -22,8 +32,8 @@ void render_mask_line(struct RenderMask* mask, const line_t line, line_t* out)
 
         // both ends of the line masked, abort
         if (dotA < 0 && dotB < 0) {
-            out->a = (vector_t){ 1.0f, 1.0f, -1.0f, 1.0f };
-            out->b = (vector_t){ 1.0f, 1.0f, -1.0f, 1.0f };
+            out->a = (vector_t){ -1.0f, -1.0f, -1.0f, -1.0f };
+            out->b = (vector_t){ -1.0f, -1.0f, -1.0f, -1.0f };
             return;
         }
 
@@ -80,6 +90,17 @@ void render_mask_line(struct RenderMask* mask, const line_t line, line_t* out)
         }
     }
 
+    // at least one mask group is behind the camera.
+    // we're assuming we want to mask stuff
+    // so just hide that line
+    for (int i = 0; i <= maxGroup; i++) {
+        if (linesInGroup[i] > 0 && groupBehindZCount[i] == linesInGroup[i]) {
+            out->a = (vector_t){ 1.0f, -1.0f, -1.0f, -1.0f };
+            out->b = (vector_t){ -1.0f, -1.0f, -1.0f, -1.0f };
+            return;
+        }
+    }
+
     *out = maskedLine;
 }
 
@@ -96,8 +117,15 @@ void render_batch_add_data(struct RenderBatch* batch, struct RenderData data)
 }
 
 void render_batch_add_mask_line(struct RenderBatch* batch, const line_t maskLine) {
+    render_batch_add_mask_line_group(batch, maskLine, batch->mask.count);
+}
+
+void render_batch_add_mask_line_group(struct RenderBatch* batch, const line_t maskLine, int group)
+{
     if (batch->mask.count == RENDER_MASK_MAX_LINES) return;
-    batch->mask.lines[batch->mask.count++] = maskLine;
+    batch->mask.group[batch->mask.count] = group;
+    batch->mask.lines[batch->mask.count] = maskLine;
+    batch->mask.count++;
 }
 
 void render_batch_apply_matrix(struct RenderBatch* batch, const matrix_t matrix) {

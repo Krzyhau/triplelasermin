@@ -17,6 +17,7 @@ typedef struct {
 struct RenderMask {
     int count;
     line_t lines[RENDER_MASK_MAX_LINES];
+    int group[RENDER_MASK_MAX_LINES];
 };
 
 struct RenderData{
@@ -33,6 +34,7 @@ struct RenderBatch{
 void render_batch_reset(struct RenderBatch* batch);
 void render_batch_add_data(struct RenderBatch* batch, struct RenderData data);
 void render_batch_add_mask_line(struct RenderBatch* batch, const line_t maskLine);
+void render_batch_add_mask_line_group(struct RenderBatch* batch, const line_t maskLine, int group);
 void render_batch_apply_matrix(struct RenderBatch* batch, const matrix_t matrix);
 void render_batch_project(struct RenderBatch* batch, struct Camera* camera);
 void render_batch_draw(struct Display* display, struct RenderBatch* batch);
