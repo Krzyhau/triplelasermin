@@ -43,6 +43,8 @@
     <ClCompile Include="src\math\transform.c">
       <Filter>math</Filter>
     </ClCompile>
+    <ClCompile Include="src\world.c" />
+    <ClCompile Include="src\player.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\display.h">
@@ -73,5 +75,6 @@
       <Filter>math</Filter>
     </ClInclude>
     <ClInclude Include="src\world.h" />
+    <ClInclude Include="src\player.h" />
   </ItemGroup>
 </Project>
