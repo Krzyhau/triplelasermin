@@ -29,15 +29,16 @@ struct RenderBatch{
     int dataCount;
     struct RenderData data[RENDER_BATCH_MAX_DATA];
     struct RenderMask mask;
+
+    struct Display* display;
+    struct Camera* camera;
 };
 
+void render_batch_init(struct RenderBatch* batch, struct Display* display, struct Camera* camera);
 void render_batch_reset(struct RenderBatch* batch);
 void render_batch_add_data(struct RenderBatch* batch, struct RenderData data);
 void render_batch_add_mask_line(struct RenderBatch* batch, const line_t maskLine);
 void render_batch_add_mask_line_group(struct RenderBatch* batch, const line_t maskLine, int group);
-void render_batch_apply_matrix(struct RenderBatch* batch, const matrix_t matrix);
-void render_batch_project(struct RenderBatch* batch, struct Camera* camera);
-void render_batch_draw(struct Display* display, struct RenderBatch* batch);
-void render_line_draw(struct Display* display, struct RenderData data);
+void render_batch_draw(struct RenderBatch* batch);
 
 #endif

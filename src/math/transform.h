@@ -17,4 +17,6 @@ void transform_up(const transform_t transform, vector_t* out);
 void transform_world_to_local_matrix(const transform_t transform, matrix_t* out);
 void transform_local_to_world_matrix(const transform_t transform, matrix_t* out);
 
+void transform_apply_matrix(const transform_t transform, const matrix_t mat, transform_t* out);
+
 #endif

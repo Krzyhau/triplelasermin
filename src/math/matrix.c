@@ -83,3 +83,36 @@ void mat_transform_point(const matrix_t mat, const vector_t point, vector_t* out
     out->z = mat.m[2][0] * point.x + mat.m[2][1] * point.y + mat.m[2][2] * point.z + mat.m[2][3];
     out->w = mat.m[3][0] * point.x + mat.m[3][1] * point.y + mat.m[3][2] * point.z + mat.m[3][3];
 }
+
+void mat_to_quaternion(const matrix_t mat, quaternion_t* out)
+{
+    float tr = mat.m[0][0] + mat.m[1][1] + mat.m[2][2];
+    if (tr > 0) {
+        float S = sqrt(tr + 1.0) * 2;
+        out->w = 0.25f * S;
+        out->x = (mat.m[2][1] - mat.m[1][2]) / S;
+        out->y = (mat.m[0][2] - mat.m[2][0]) / S;
+        out->z = (mat.m[1][0] - mat.m[0][1]) / S;
+    }
+    else if ((mat.m[0][0] > mat.m[1][1]) & (mat.m[0][0] > mat.m[2][2])) {
+        float S = sqrt(1.0 + mat.m[0][0] - mat.m[1][1] - mat.m[2][2]) * 2;
+        out->w = (mat.m[2][1] - mat.m[1][2]) / S;
+        out->x = 0.25f * S;
+        out->y = (mat.m[0][1] + mat.m[1][0]) / S;
+        out->z = (mat.m[0][2] + mat.m[2][0]) / S;
+    }
+    else if (mat.m[1][1] > mat.m[2][2]) {
+        float S = sqrt(1.0 + mat.m[1][1] - mat.m[0][0] - mat.m[2][2]) * 2;
+        out->w = (mat.m[0][2] - mat.m[2][0]) / S;
+        out->x = (mat.m[0][1] + mat.m[1][0]) / S;
+        out->y = 0.25f * S;
+        out->z = (mat.m[1][2] + mat.m[2][1]) / S;
+    }
+    else {
+        float S = sqrt(1.0 + mat.m[2][2] - mat.m[0][0] - mat.m[1][1]) * 2;
+        out->w = (mat.m[1][0] - mat.m[0][1]) / S;
+        out->x = (mat.m[0][2] + mat.m[2][0]) / S;
+        out->y = (mat.m[1][2] + mat.m[2][1]) / S;
+        out->z = 0.25f * S;
+    }
+}

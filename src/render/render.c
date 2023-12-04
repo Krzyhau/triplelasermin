@@ -104,6 +104,13 @@ void render_mask_line(struct RenderMask* mask, const line_t line, line_t* out)
     *out = maskedLine;
 }
 
+void render_batch_init(struct RenderBatch* batch, struct Display* display, struct Camera* camera)
+{
+    batch->display = display;
+    batch->camera = camera;
+    render_batch_reset(batch);
+}
+
 void render_batch_reset(struct RenderBatch* batch)
 {
     batch->dataCount = 0;
@@ -198,8 +205,10 @@ void render_line_near_plane_clip(struct RenderBatch* batch, float nearPlane, con
     }
 }
 
-void render_batch_project(struct RenderBatch* batch, struct Camera* camera)
+void render_batch_project(struct RenderBatch* batch)
 {
+    struct Camera* camera = batch->camera;
+
     // transform batch with view matrix
     matrix_t worldToLocalMatrix;
     transform_world_to_local_matrix(camera->transform, &worldToLocalMatrix);
@@ -217,17 +226,6 @@ void render_batch_project(struct RenderBatch* batch, struct Camera* camera)
     matrix_t projectionMatrix;
     camera_projection_matrix(camera, &projectionMatrix);
     render_batch_apply_matrix(batch, projectionMatrix);
-}
-
-void render_batch_draw(struct Display* display, struct RenderBatch* batch)
-{
-    render_batch_screen_space_pass(batch, display);
-
-    for (int i = 0; i < batch->dataCount; i++) {
-        struct RenderData data = batch->data[i];
-        if (data.line.a.z < 0 && data.line.b.z < 0) continue;
-        render_line_draw(display, data);
-    }
 }
 
 void render_line_draw(struct Display* display, struct RenderData data)
@@ -270,5 +268,18 @@ void render_line_draw(struct Display* display, struct RenderData data)
             err += dx;
             y1 += sy;
         }
+    }
+}
+
+void render_batch_draw(struct RenderBatch* batch)
+{
+    render_batch_project(batch);
+
+    render_batch_screen_space_pass(batch, batch->display);
+
+    for (int i = 0; i < batch->dataCount; i++) {
+        struct RenderData data = batch->data[i];
+        if (data.line.a.z < 0 && data.line.b.z < 0) continue;
+        render_line_draw(batch->display, data);
     }
 }

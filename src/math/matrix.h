@@ -15,5 +15,6 @@ void mat_perspective(float fov, float aspectRatio, float near, float far, matrix
 
 void mat_mul(const matrix_t a, const matrix_t b, matrix_t* out);
 void mat_transform_point(const matrix_t mat, const vector_t point, vector_t* out);
+void mat_to_quaternion(const matrix_t mat, quaternion_t* out);
 
 #endif

@@ -2,40 +2,82 @@
 
 void world_init(struct World* world, struct WorldData* data)
 {
+    world->objectCount = 0;
     world->data = data;
+
     player_init(&world->player, world);
     camera_init(&world->camera);
+
+    world_add_object(world, &world->player.object);
+
+    portal_init(&world->primaryPortal, world, &world->secondaryPortal, (color_t) { .rgba = 0xff006fde });
+    portal_init(&world->secondaryPortal, world, &world->primaryPortal, (color_t) { .rgba = 0xffde6f00 });
+
+    world_add_object(world, &world->primaryPortal);
+    world_add_object(world, &world->secondaryPortal);
+
+    world->primaryPortal.object.transform.position = (vector_t){ -3.5, 0.5, -0.75 };
+    world->secondaryPortal.object.transform.position = (vector_t){ -5, 0.5, -0.75 };
+    quaternion_axis_angle(180.0f, (vector_t) { 0.0f, 1.0f, 0.0f }, & world->primaryPortal.object.transform.rotation);
+    quaternion_axis_angle(180.0f, (vector_t) { 0.0f, 1.0f, 0.0f }, &world->secondaryPortal.object.transform.rotation);
 
     world->gravity = 5.0f;
 }
 
 void world_update(struct World* world, struct WindowHandler* window)
 {
-    player_update(&world->player, window);
+    for (int i = 0; i < world->objectCount; i++) {
+        object_update(world->objects[i], window);
+    }
 
     vector_t cam_offset = { 0.0f, 0.5f, 0.0f };
-    vector_add(world->player.transform.position, cam_offset, &world->camera.transform.position);
-    world->camera.transform.rotation = world->player.transform.rotation;
+    vector_add(world->player.object.transform.position, cam_offset, &world->camera.transform.position);
+    world->camera.transform.rotation = world->player.object.transform.rotation;
 }
 
-void world_render(struct World* world, struct Display* display)
+void world_add_object(struct World* world, struct Object* object)
 {
-    world->camera.aspectRatio = (float)display->width / (float)display->height;
+    if (world->objectCount >= WORLD_MAX_OBJECTS) return;
+    world->objects[world->objectCount] = object;
+    world->objectCount++;
+}
 
-    vector_t cp = world->camera.transform.position;
-
-    // find the first room to render with camera position and bounds
-    int startingRoom = world->data->roomCount;
-    while (--startingRoom >= 0) {
-        int boundId = world->data->rooms[startingRoom].boundsCount;
+int world_get_room_at(struct World* world, vector_t pos)
+{
+    int room = world->data->roomCount;
+    while (--room >= 0) {
+        int boundId = world->data->rooms[room].boundsCount;
         while (--boundId >= 0) {
-            vector_t bound = world->data->rooms[startingRoom].bounds[boundId];
-            float dist = bound.x * cp.x + bound.y * cp.y + bound.z * cp.z - bound.w;
+            vector_t bound = world->data->rooms[room].bounds[boundId];
+            float dist = bound.x * pos.x + bound.y * pos.y + bound.z * pos.z - bound.w;
             if (dist < 0) break;
         }
-        if (boundId < 0)  break;
+        if (boundId < 0) break;
     }
-    if (startingRoom < 0) return;
+    return room;
+}
+
+void world_render_custom(struct World* world, struct Display* display, struct Camera camera, struct WorldPortalData* mainPortal)
+{
+    camera.aspectRatio = (float)display->width / (float)display->height;
+
+    vector_t cp = camera.transform.position;
+
+    
+    int startingRoom = 0;
+    if (mainPortal != NULL) {
+        // if given portal is valid, use its target room for rendering
+        // otherwise, we won't see anything anyway, so just skip it
+        vector_t pmask = mainPortal->plane;
+        float dist = pmask.x * cp.x + pmask.y * cp.y + pmask.z * cp.z - pmask.w;
+        if (dist <= 0) return;
+
+        startingRoom = mainPortal->roomTo;
+    }
+    else {
+        // find the first room to render
+        startingRoom = world_get_room_at(world, cp);
+    }
 
     // figure out which portals we can render through
     uint32_t portalDirectionsFlag = 0;
@@ -80,13 +122,23 @@ void world_render(struct World* world, struct Display* display)
 
 
     // render propagation data
-    struct RenderBatch batch;
+    struct RenderBatch* batch = malloc(sizeof(struct RenderBatch));
+    render_batch_init(batch, display, &camera);
 
     for (int i = 0; i < propagationSteps; i++) {
-        render_batch_reset(&batch);
+        render_batch_reset(batch);
 
         int room = roomPropagationList[i];
         uint32_t roomMask = portalMaskPropagationList[i];
+
+        // if using main portal, add it to mask
+        if (mainPortal != NULL) {
+            for (int vert = 0; vert < mainPortal->verticesCount; vert++) {
+                vector_t p1 = mainPortal->vertices[vert];
+                vector_t p2 = mainPortal->vertices[(vert + 1) % mainPortal->verticesCount];
+                render_batch_add_mask_line_group(batch, (line_t) { p1, p2 }, 0);
+            }
+        }
 
         // generate masks based on previously made flag masks
         for (int portalId = 0; portalId < world->data->portalsCount; portalId++) {
@@ -97,7 +149,7 @@ void world_render(struct World* world, struct Display* display)
                 vector_t p1 = portal->vertices[vert];
                 vector_t p2 = portal->vertices[(vert + 1) % portal->verticesCount];
                 line_t maskLine = (reversed) ? (line_t) { p2, p1 } : (line_t) { p1, p2 };
-                render_batch_add_mask_line_group(&batch, maskLine, portalId);
+                render_batch_add_mask_line_group(batch, maskLine, portalId+1);
             }
         }
 
@@ -107,11 +159,20 @@ void world_render(struct World* world, struct Display* display)
                 .color = (color_t){.rgba = 0xffffffff},
                 .line = world->data->rooms[room].lines[line]
             };
-            render_batch_add_data(&batch, data);
+            render_batch_add_data(batch, data);
         }
 
-        // project and render
-        render_batch_project(&batch, &world->camera);
-        render_batch_draw(display, &batch);
+        for (int i = 0; i < world->objectCount; i++) {
+            object_render(world->objects[i], batch, room);
+        }
+
+        render_batch_draw(batch);
     }
+
+    free(batch);
+}
+
+void world_render(struct World* world, struct Display* display)
+{
+    world_render_custom(world, display, world->camera, NULL);
 }

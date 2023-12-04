@@ -1,9 +1,7 @@
 #ifndef __PLAYER_H__
 #define __PLAYER_H__
 
-#include "math/transform.h"
-#include "math/quaternion.h"
-
+#include "object.h"
 
 enum PlayerButtonFlags {
     PlayerButtonDuck = 0x01,
@@ -24,14 +22,11 @@ enum PlayerFlags {
 };
 
 struct Player {
-    struct World* world;
+    struct Object object;
 
-    transform_t transform;
-    vector_t velocity;
     enum PlayerFlags flags;
 };
 
 void player_init(struct Player* player, struct World* world);
-void player_update(struct Player* player, struct WindowHandler* window);
 
 #endif

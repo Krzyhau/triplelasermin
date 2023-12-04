@@ -44,7 +44,9 @@
       <Filter>math</Filter>
     </ClCompile>
     <ClCompile Include="src\world.c" />
+    <ClCompile Include="src\object.c" />
     <ClCompile Include="src\player.c" />
+    <ClCompile Include="src\portal.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\core\display.h">
@@ -75,6 +77,8 @@
       <Filter>math</Filter>
     </ClInclude>
     <ClInclude Include="src\world.h" />
+    <ClInclude Include="src\object.h" />
     <ClInclude Include="src\player.h" />
+    <ClInclude Include="src\portal.h" />
   </ItemGroup>
 </Project>

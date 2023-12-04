@@ -40,5 +40,14 @@ void transform_local_to_world_matrix(const transform_t transform, matrix_t* out)
     mat_translate(transform.position, &translate_matrix);
     mat_rotate(transform.rotation, &rotate_matrix);
 
-    mat_mul(rotate_matrix, translate_matrix, out);
+    mat_mul(translate_matrix, rotate_matrix, out);
+}
+
+void transform_apply_matrix(const transform_t transform, const matrix_t mat, transform_t* out)
+{
+    mat_transform_point(mat, transform.position, &out->position);
+
+    quaternion_t mat_q;
+    mat_to_quaternion(mat, &mat_q);
+    quaternion_multiply(transform.rotation, mat_q, &out->rotation);
 }
