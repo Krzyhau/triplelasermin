@@ -17,6 +17,7 @@ typedef struct {
 struct RenderMask {
     int count;
     line_t lines[RENDER_MASK_MAX_LINES];
+    int nextGroup;
     int group[RENDER_MASK_MAX_LINES];
 };
 

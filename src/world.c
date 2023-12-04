@@ -57,7 +57,7 @@ int world_get_room_at(struct World* world, vector_t pos)
     return room;
 }
 
-void world_render_custom(struct World* world, struct Display* display, struct Camera camera, struct WorldPortalData* mainPortal)
+void world_render_custom(struct World* world, struct Display* display, struct Camera camera, struct WorldPortalData* mainPortal, struct RenderMask* preexistingMask)
 {
     camera.aspectRatio = (float)display->width / (float)display->height;
 
@@ -131,12 +131,18 @@ void world_render_custom(struct World* world, struct Display* display, struct Ca
         int room = roomPropagationList[i];
         uint32_t roomMask = portalMaskPropagationList[i];
 
+        // if given preexisting mask, borrow it
+        if (preexistingMask != NULL) {
+            batch->mask = *preexistingMask;
+        }
+
         // if using main portal, add it to mask
+        int startingGroup = batch->mask.nextGroup;
         if (mainPortal != NULL) {
             for (int vert = 0; vert < mainPortal->verticesCount; vert++) {
                 vector_t p1 = mainPortal->vertices[vert];
                 vector_t p2 = mainPortal->vertices[(vert + 1) % mainPortal->verticesCount];
-                render_batch_add_mask_line_group(batch, (line_t) { p1, p2 }, 0);
+                render_batch_add_mask_line_group(batch, (line_t) { p1, p2 }, startingGroup);
             }
         }
 
@@ -149,7 +155,7 @@ void world_render_custom(struct World* world, struct Display* display, struct Ca
                 vector_t p1 = portal->vertices[vert];
                 vector_t p2 = portal->vertices[(vert + 1) % portal->verticesCount];
                 line_t maskLine = (reversed) ? (line_t) { p2, p1 } : (line_t) { p1, p2 };
-                render_batch_add_mask_line_group(batch, maskLine, portalId+1);
+                render_batch_add_mask_line_group(batch, maskLine, startingGroup+portalId+1);
             }
         }
 
@@ -174,5 +180,5 @@ void world_render_custom(struct World* world, struct Display* display, struct Ca
 
 void world_render(struct World* world, struct Display* display)
 {
-    world_render_custom(world, display, world->camera, NULL);
+    world_render_custom(world, display, world->camera, NULL, NULL);
 }

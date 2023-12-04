@@ -115,6 +115,7 @@ void render_batch_reset(struct RenderBatch* batch)
 {
     batch->dataCount = 0;
     batch->mask.count = 0;
+    batch->mask.nextGroup = 0;
 }
 
 void render_batch_add_data(struct RenderBatch* batch, struct RenderData data)
@@ -124,7 +125,7 @@ void render_batch_add_data(struct RenderBatch* batch, struct RenderData data)
 }
 
 void render_batch_add_mask_line(struct RenderBatch* batch, const line_t maskLine) {
-    render_batch_add_mask_line_group(batch, maskLine, batch->mask.count);
+    render_batch_add_mask_line_group(batch, maskLine, batch->mask.nextGroup);
 }
 
 void render_batch_add_mask_line_group(struct RenderBatch* batch, const line_t maskLine, int group)
@@ -133,6 +134,9 @@ void render_batch_add_mask_line_group(struct RenderBatch* batch, const line_t ma
     batch->mask.group[batch->mask.count] = group;
     batch->mask.lines[batch->mask.count] = maskLine;
     batch->mask.count++;
+    if (group >= batch->mask.nextGroup) {
+        batch->mask.nextGroup = group + 1;
+    }
 }
 
 void render_batch_apply_matrix(struct RenderBatch* batch, const matrix_t matrix) {

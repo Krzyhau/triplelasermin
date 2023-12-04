@@ -69,9 +69,22 @@ void portal_draw(struct Object* obj, struct RenderBatch* batch, int room) {
         struct Camera portalCamera = *batch->camera;
         transform_apply_matrix(portalCamera.transform, portalMatrix, &portalCamera.transform);
 
+        struct RenderMask* portalWorldMask = malloc(sizeof(struct RenderMask));
+        portalWorldMask->count = batch->mask.count;
+        portalWorldMask->nextGroup = batch->mask.nextGroup;
+        for (int i = 0; i < portalWorldMask->count; i++) {
+            portalWorldMask->group[i] = batch->mask.group[i];
+            line_t maskLine;
+            mat_transform_point(portalMatrix, batch->mask.lines[i].a, &maskLine.a);
+            mat_transform_point(portalMatrix, batch->mask.lines[i].b, &maskLine.b);
+            portalWorldMask->lines[i] = maskLine;
+        }
+
         portal->currentDepth++;
-        world_render_custom(obj->world, batch->display, portalCamera, &worldPortal);
+        world_render_custom(obj->world, batch->display, portalCamera, &worldPortal, portalWorldMask);
         portal->currentDepth--;
+
+        free(portalWorldMask);
     }
 }
 
