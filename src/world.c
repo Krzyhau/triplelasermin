@@ -1,5 +1,7 @@
 #include "world.h"
 
+#include "core/window.h"
+
 void world_init(struct World* world, struct WorldData* data)
 {
     world->objectCount = 0;
@@ -33,6 +35,14 @@ void world_update(struct World* world, struct WindowHandler* window)
     vector_t cam_offset = { 0.0f, 0.5f, 0.0f };
     vector_add(world->player.object.transform.position, cam_offset, &world->camera.transform.position);
     world->camera.transform.rotation = world->player.object.transform.rotation;
+
+    if (input_key_pressing(window->input, 'Q')) {
+        portal_set_state(&world->primaryPortal, world->primaryPortal.state == PortalOpen ? PortalClosed : PortalOpen);
+    }
+
+    if (input_key_pressing(window->input, 'E')) {
+        portal_set_state(&world->secondaryPortal, world->secondaryPortal.state == PortalOpen ? PortalClosed : PortalOpen);
+    }
 }
 
 void world_add_object(struct World* world, struct Object* object)
