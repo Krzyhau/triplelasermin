@@ -5,6 +5,8 @@ void world_init(struct World* world, struct WorldData* data)
     world->data = data;
     player_init(&world->player, world);
     camera_init(&world->camera);
+
+    world->gravity = 5.0f;
 }
 
 void world_update(struct World* world, struct WindowHandler* window)

@@ -34,6 +34,8 @@ struct World {
 
     struct Player player;
     struct Camera camera;
+
+    float gravity;
 };
 
 void world_init(struct World* world, struct WorldData* data);
