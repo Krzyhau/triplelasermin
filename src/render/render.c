@@ -59,8 +59,8 @@ void render_mask_line(struct RenderMask* mask, const line_t line, line_t* out)
         float maskM = (maskLine.b.y - maskLine.a.y) / maskLineDiffX;
         float maskC = maskLine.a.y - maskM * maskLine.a.x;
 
-        // lines are parallel, don't bother
-        if (lineM == maskM) {
+        // lines are parallel (or almost parallel), don't bother
+        if (fabsf(lineM - maskM) < 0.001f) {
             continue;
         }
 
