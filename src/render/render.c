@@ -287,3 +287,16 @@ void render_batch_draw(struct RenderBatch* batch)
         render_line_draw(batch->display, data);
     }
 }
+
+void render_data_single_draw(struct RenderData data, struct Display* display, struct Camera camera)
+{
+    camera.aspectRatio = (float)display->width / (float)display->height;
+
+    struct RenderBatch* batch = malloc(sizeof(struct RenderBatch));
+    render_batch_init(batch, display, &camera);
+
+    render_batch_add_data(batch, data);
+    render_batch_draw(batch);
+
+    free(batch);
+}

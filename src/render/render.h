@@ -42,4 +42,6 @@ void render_batch_add_mask_line(struct RenderBatch* batch, const line_t maskLine
 void render_batch_add_mask_line_group(struct RenderBatch* batch, const line_t maskLine, int group);
 void render_batch_draw(struct RenderBatch* batch);
 
+void render_data_single_draw(struct RenderData data, struct Display* display, struct Camera camera);
+
 #endif

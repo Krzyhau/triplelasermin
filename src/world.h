@@ -48,11 +48,27 @@ struct World {
     struct Object* objects[WORLD_MAX_OBJECTS];
 };
 
+enum RayCastHitType {
+    HitNone,
+    HitWorld,
+    HitEntity,
+};
+
+struct RayCastHit {
+    int room;
+    uint32_t passedRooms;
+    vector_t normal;
+    vector_t point;
+    float dist;
+    enum RayCastHitType type;
+};
+
 void world_init(struct World* world, struct WorldData* data);
 void world_update(struct World* world, struct WindowHandler* window);
 void world_add_object(struct World* world, struct Object* object);
 int world_get_room_at(struct World* world, vector_t pos);
 void world_render_custom(struct World* world, struct Display* display, struct Camera camera, struct WorldPortalData* portal, struct RenderMask* preexistingMask);
 void world_render(struct World* world, struct Display* display);
+void world_raycast(struct World* world, vector_t origin, vector_t dir, struct RayCastHit* result);
 
 #endif

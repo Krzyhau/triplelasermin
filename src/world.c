@@ -2,8 +2,12 @@
 
 #include "core/window.h"
 
+line_t raycastRayLine;
+
 void world_init(struct World* world, struct WorldData* data)
 {
+    raycastRayLine = (line_t){ {0.0f, 0.0f, 0.0f},{0.0f, 0.0f, 0.0f} };
+
     world->objectCount = 0;
     world->data = data;
 
@@ -42,6 +46,20 @@ void world_update(struct World* world, struct WindowHandler* window)
 
     if (input_key_pressing(window->input, 'E')) {
         portal_set_state(&world->secondaryPortal, world->secondaryPortal.state == PortalOpen ? PortalClosed : PortalOpen);
+    }
+
+    if (input_key_pressing(window->input, 'X')) {
+        raycastRayLine.a = world->camera.transform.position;
+        vector_t castDir;
+        transform_forward(world->camera.transform, &castDir);
+        struct RayCastHit hit;
+        world_raycast(world, raycastRayLine.a, castDir, &hit);
+        if (hit.type == HitWorld) {
+            raycastRayLine.b = hit.point;
+        }
+        else {
+            raycastRayLine.b = raycastRayLine.a;
+        }
     }
 }
 
@@ -191,4 +209,102 @@ void world_render_custom(struct World* world, struct Display* display, struct Ca
 void world_render(struct World* world, struct Display* display)
 {
     world_render_custom(world, display, world->camera, NULL, NULL);
+
+    render_data_single_draw((struct RenderData) {
+        .line = raycastRayLine,
+        .color = (color_t){ .rgba = 0xffff0000 },
+    }, display, world->camera);
+}
+
+void world_raycast(struct World* world, vector_t start, vector_t dir, struct RayCastHit* result)
+{
+    const float MAX_DISTANCE = 1024.0f;
+
+    result->passedRooms = 0;
+    result->type = HitNone;
+
+    vector_t end;
+    vector_scale(dir, MAX_DISTANCE, &end);
+    vector_add(start, end, &end);
+
+    int nextRoom = world_get_room_at(world, start);
+
+    while (nextRoom >= 0) {
+
+        // check what's the nearest collision plane in this room the ray can collide with
+        result->dist = MAX_DISTANCE;
+        struct WorldRoomData roomData = world->data->rooms[nextRoom];
+        for (int i = 0; i < roomData.collisionCount; i++) {
+            vector_t cplane = roomData.collisions[i];
+            float sDist = cplane.x * start.x + cplane.y * start.y + cplane.z * start.z - cplane.w;
+            float eDist = cplane.x * end.x + cplane.y * end.y + cplane.z * end.z - cplane.w;
+
+            // ray does not pass through this plane
+            if (sDist <= 0 || eDist >= 0) continue;
+
+            float hitFrac = (sDist / (sDist - eDist)) * MAX_DISTANCE;
+            if (hitFrac < result->dist) {
+                result->dist = hitFrac;
+                result->normal = (vector_t){ cplane.x, cplane.y, cplane.z };
+            }
+        }
+
+
+        result->room = nextRoom;
+        result->passedRooms |= (1 << nextRoom);
+        nextRoom = -1;
+
+        // find a portal a ray could potentially go through
+        for (int i = 0; i < world->data->portalsCount; i++) {
+            struct WorldPortalData portal = world->data->portals[i];
+            
+            if (portal.roomFrom != result->room && portal.roomTo != result->room) continue;
+            int roomToGoTo = portal.roomTo == result->room ? portal.roomFrom : portal.roomTo;
+            if ((result->passedRooms & (1 << roomToGoTo)) > 0) continue;
+
+            vector_t pplane = portal.plane;
+            float sDist = pplane.x * start.x + pplane.y * start.y + pplane.z * start.z - pplane.w;
+            float eDist = pplane.x * end.x + pplane.y * end.y + pplane.z * end.z - pplane.w;
+
+            if (sDist * eDist > 0.0f) continue;
+
+            float hitFrac = (sDist / (sDist - eDist)) * MAX_DISTANCE;
+
+            vector_t hitPoint;
+            vector_scale(dir, hitFrac, &hitPoint);
+            vector_add(start, hitPoint, &hitPoint);
+
+            vector_t planeNorm = portal.plane;
+            planeNorm.w = 0.0f;
+
+            int vertId = portal.verticesCount;
+            while (--vertId >= 0) {
+                vector_t vert1 = portal.vertices[vertId];
+                vector_t vert2 = portal.vertices[(vertId+1) % portal.verticesCount];
+
+                vector_t lineVec, hitPointVec, lineNorm;
+                vector_sub(vert2, vert1, &lineVec);
+                vector_norm(lineVec, &lineVec);
+                vector_sub(hitPoint, vert1, &hitPointVec);
+                vector_norm(hitPointVec, &hitPointVec);
+                
+                vector_cross(lineVec, planeNorm, &lineNorm);
+                if (vector_dot(lineNorm, hitPointVec) < 0) {
+                    break;
+                }
+            }
+            // went through all portal lines, meaning hit point is in portal
+            if (vertId < 0) {
+                nextRoom = roomToGoTo;
+                break;
+            }
+        }
+    }
+
+    if (result->dist < MAX_DISTANCE) {
+        vector_t hitDelta;
+        vector_scale(dir, result->dist, &hitDelta);
+        vector_add(hitDelta, start, &result->point);
+        result->type = HitWorld;
+    }
 }
