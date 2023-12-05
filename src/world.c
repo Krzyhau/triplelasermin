@@ -53,7 +53,7 @@ void world_update(struct World* world, struct WindowHandler* window)
         vector_t castDir;
         transform_forward(world->camera.transform, &castDir);
         struct RayCastHit hit;
-        world_raycast(world, raycastRayLine.a, castDir, &hit);
+        world_raycast(world, raycastRayLine.a, castDir, 1024, &hit);
         if (hit.type == HitWorld) {
             raycastRayLine.b = hit.point;
         }
@@ -216,15 +216,13 @@ void world_render(struct World* world, struct Display* display)
     }, display, world->camera);
 }
 
-void world_raycast(struct World* world, vector_t start, vector_t dir, struct RayCastHit* result)
+void world_raycast(struct World* world, vector_t start, vector_t dir, float dist, struct RayCastHit* result)
 {
-    const float MAX_DISTANCE = 1024.0f;
-
     result->passedRooms = 0;
     result->type = HitNone;
 
     vector_t end;
-    vector_scale(dir, MAX_DISTANCE, &end);
+    vector_scale(dir, dist, &end);
     vector_add(start, end, &end);
 
     int nextRoom = world_get_room_at(world, start);
@@ -232,7 +230,7 @@ void world_raycast(struct World* world, vector_t start, vector_t dir, struct Ray
     while (nextRoom >= 0) {
 
         // check what's the nearest collision plane in this room the ray can collide with
-        result->dist = MAX_DISTANCE;
+        result->dist = dist;
         struct WorldRoomData roomData = world->data->rooms[nextRoom];
         for (int i = 0; i < roomData.collisionCount; i++) {
             vector_t cplane = roomData.collisions[i];
@@ -242,7 +240,7 @@ void world_raycast(struct World* world, vector_t start, vector_t dir, struct Ray
             // ray does not pass through this plane
             if (sDist <= 0 || eDist >= 0) continue;
 
-            float hitFrac = (sDist / (sDist - eDist)) * MAX_DISTANCE;
+            float hitFrac = (sDist / (sDist - eDist)) * dist;
             if (hitFrac < result->dist) {
                 result->dist = hitFrac;
                 result->normal = (vector_t){ cplane.x, cplane.y, cplane.z };
@@ -268,7 +266,7 @@ void world_raycast(struct World* world, vector_t start, vector_t dir, struct Ray
 
             if (sDist * eDist > 0.0f) continue;
 
-            float hitFrac = (sDist / (sDist - eDist)) * MAX_DISTANCE;
+            float hitFrac = (sDist / (sDist - eDist)) * dist;
 
             vector_t hitPoint;
             vector_scale(dir, hitFrac, &hitPoint);
@@ -301,7 +299,7 @@ void world_raycast(struct World* world, vector_t start, vector_t dir, struct Ray
         }
     }
 
-    if (result->dist < MAX_DISTANCE) {
+    if (result->dist < dist) {
         vector_t hitDelta;
         vector_scale(dir, result->dist, &hitDelta);
         vector_add(hitDelta, start, &result->point);

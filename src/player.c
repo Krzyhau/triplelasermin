@@ -123,6 +123,51 @@ void player_apply_gravity(struct Player* player, struct PlayerCmd* cmd) {
     }
 }
 
+void player_check_collisions(struct Player* player, struct PlayerCmd* cmd) {
+    const float hitboxRadius = 0.2f;
+
+    const float checkHeight = 0.25f;
+
+    vector_t checkOrigin;
+    vector_add(player->object.transform.position, (vector_t) { 0.0f, checkHeight, 0.0f }, & checkOrigin);
+
+    vector_t stepDelta;
+    vector_scale(player->object.velocity, cmd->frametime, &stepDelta);
+
+    if (stepDelta.y <= 0) {
+        struct RayCastHit hit;
+        world_raycast(player->object.world, checkOrigin, (vector_t) { 0.0f, -1.0f, 0.0f }, checkHeight + stepDelta.y + 0.01f, & hit);
+        if (hit.type != HitNone) {
+            stepDelta.y = 0;
+            player->flags |= PlayerGrounded;
+            player->object.transform.position.y = hit.point.y;
+        }
+        else {
+            player->flags &= ~PlayerGrounded;
+        }
+    }
+
+    const int sideCasts = 4;
+    for (int i = 0; i < sideCasts; i++) {
+        float ang = 2.0f * M_PI * ((float)i / (float)sideCasts);
+        vector_t dir = {cosf(ang), 0, sinf(ang)};
+        
+        float stepDeltaDir = vector_dot(dir, stepDelta);
+        if (stepDeltaDir <= 0) continue;
+
+        struct RayCastHit hit;
+        world_raycast(player->object.world, checkOrigin, dir, hitboxRadius + stepDeltaDir, & hit);
+
+        if (hit.type == HitNone) continue;
+
+        vector_t resolve;
+        vector_scale(dir, hit.dist - (hitboxRadius + stepDeltaDir), &resolve);
+        vector_add(stepDelta, resolve, &stepDelta);
+    }
+
+    vector_scale(stepDelta, 1.0f / cmd->frametime, &player->object.velocity);
+}
+
 void player_update(struct Object* obj, struct WindowHandler* window)
 {
     struct Player* player = obj->data;
@@ -134,11 +179,7 @@ void player_update(struct Object* obj, struct WindowHandler* window)
     player_apply_gravity(player, &cmd);
     player_apply_angles(player, &cmd);
     player_process_movement(player, &cmd);
-
-    if (obj->transform.position.y + obj->velocity.y * window->deltaTime < 0.0f) {
-        obj->transform.position.y = 0;
-        player->flags |= PlayerGrounded;
-    }
+    player_check_collisions(player, &cmd);
 }
 
 

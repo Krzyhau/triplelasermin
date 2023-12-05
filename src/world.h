@@ -69,6 +69,6 @@ void world_add_object(struct World* world, struct Object* object);
 int world_get_room_at(struct World* world, vector_t pos);
 void world_render_custom(struct World* world, struct Display* display, struct Camera camera, struct WorldPortalData* portal, struct RenderMask* preexistingMask);
 void world_render(struct World* world, struct Display* display);
-void world_raycast(struct World* world, vector_t origin, vector_t dir, struct RayCastHit* result);
+void world_raycast(struct World* world, vector_t origin, vector_t dir, float dist, struct RayCastHit* result);
 
 #endif
