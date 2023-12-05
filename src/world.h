@@ -22,6 +22,8 @@ struct WorldRoomData {
     line_t* lines;
     int boundsCount;
     vector_t* bounds;
+    int collisionCount;
+    vector_t* collisions;
 };
 
 struct WorldData {

@@ -4,6 +4,7 @@ import os
 # get room data
 room_lines = {}
 room_bounds = {}
+room_collisions = {}
 world_portals = []
 
 for obj in bpy.context.scene.objects:
@@ -42,6 +43,17 @@ for obj in bpy.context.scene.objects:
         vert_on_plane = obj.matrix_world @ obj.data.vertices[0].co
         dist = normal.dot(vert_on_plane)
         world_portals.append({"from": roomFrom, "to": roomTo, "verts": verts, "normal": normal, "dist": dist})
+
+    if obj.type == 'MESH' and collection.name.startswith("collision"):
+        roomId = int(collection.name.split(" ")[1])
+        if roomId not in room_collisions: room_collisions[roomId] = []
+        
+        normal = (obj.matrix_world.to_3x3() @ obj.data.polygons[0].normal).normalized()
+        vert_on_plane = obj.matrix_world @ obj.data.vertices[0].co
+        dist = normal.dot(vert_on_plane)
+
+        collision = [normal.x, normal.y, normal.z, dist]
+        room_collisions[roomId].append(collision)
 
 
 # save data into a header file
@@ -88,6 +100,16 @@ for portal in world_portals:
 
     mapData += "};\n\n"
 
+for roomId in room_collisions:
+    mapData += f"vector_t g_world_room_{roomId}_collisions[{len(room_collisions[roomId])}] = {{\n"
+
+    for collision in room_collisions[roomId]:
+        mapData += "    {"
+        mapData += "{:.6f},{:.6f},{:.6f},{:.6f}".format(collision[0], collision[2], collision[1], collision[3])
+        mapData += "},\n"
+
+    mapData += "};\n\n"
+
 mapData += f"struct WorldRoomData g_world_rooms[{len(room_lines)}] = {{\n"
 
 for roomId in room_lines:
@@ -95,7 +117,9 @@ for roomId in room_lines:
     mapData += f"{len(room_lines[roomId])}, "
     mapData += f"g_world_room_{roomId}_lines, "
     mapData += f"{len(room_bounds[roomId])}, "
-    mapData += f"g_world_room_{roomId}_bounds"
+    mapData += f"g_world_room_{roomId}_bounds,"
+    mapData += f"{len(room_collisions[roomId])}, "
+    mapData += f"g_world_room_{roomId}_collisions,"
     mapData += "},\n"
 
 mapData += "};\n\n"
