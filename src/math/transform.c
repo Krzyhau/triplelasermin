@@ -49,5 +49,6 @@ void transform_apply_matrix(const transform_t transform, const matrix_t mat, tra
 
     quaternion_t mat_q;
     mat_to_quaternion(mat, &mat_q);
+    quaternion_inverse(mat_q, &mat_q);
     quaternion_multiply(transform.rotation, mat_q, &out->rotation);
 }

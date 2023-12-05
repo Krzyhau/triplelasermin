@@ -16,6 +16,7 @@ enum PortalState {
 
 struct Portal {
     struct Object object;
+    struct Object ghostObject;
 
     struct Portal* linked;
     color_t color;
@@ -29,5 +30,7 @@ struct Portal {
 void portal_init(struct Portal* portal, struct World* world, struct Portal* linked, color_t color);
 void portal_passage_matrix(struct Portal* portal, matrix_t* out);
 void portal_set_state(struct Portal* portal, enum PortalState state);
+void potal_place(struct Portal* portal, transform_t transform);
+void portal_shoot(struct Portal* portal, vector_t origin, vector_t dir);
 
 #endif

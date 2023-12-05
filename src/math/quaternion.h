@@ -13,6 +13,7 @@ typedef struct {
 
 void quaternion_identity(quaternion_t* out);
 void quaternion_axis_angle(float angle, const vector_t axis, quaternion_t* out);
+void quaternion_look_rotation(const vector_t forward, const vector_t up, quaternion_t* out);
 void quaternion_inverse(const quaternion_t in, quaternion_t* out);
 void quaternion_conjugate(const quaternion_t in, quaternion_t* out);
 void quaternion_multiply(const quaternion_t a, const quaternion_t b, quaternion_t* out);

@@ -40,12 +40,21 @@ void world_update(struct World* world, struct WindowHandler* window)
     vector_add(world->player.object.transform.position, cam_offset, &world->camera.transform.position);
     world->camera.transform.rotation = world->player.object.transform.rotation;
 
+    struct Portal* shotPortalThisFrame = NULL;
+
     if (input_key_pressing(window->input, 'Q')) {
-        portal_set_state(&world->primaryPortal, world->primaryPortal.state == PortalOpen ? PortalClosed : PortalOpen);
+        shotPortalThisFrame = &world->primaryPortal;
     }
 
     if (input_key_pressing(window->input, 'E')) {
-        portal_set_state(&world->secondaryPortal, world->secondaryPortal.state == PortalOpen ? PortalClosed : PortalOpen);
+        shotPortalThisFrame = &world->secondaryPortal;
+    }
+
+    if (shotPortalThisFrame != NULL) {
+        vector_t shootPos = world->camera.transform.position;
+        vector_t shootDir;
+        transform_forward(world->camera.transform, &shootDir);
+        portal_shoot(shotPortalThisFrame, shootPos, shootDir);
     }
 
     if (input_key_pressing(window->input, 'X')) {

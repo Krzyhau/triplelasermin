@@ -27,7 +27,7 @@ void portal_draw(struct Object* obj, struct RenderBatch* batch, int room) {
     // don't render portal at all if we're on the other side of it
     vector_t cp = batch->camera->transform.position;
     float dist = portalplane.x * cp.x + portalplane.y * cp.y + portalplane.z * cp.z - portalplane.w;
-    if (dist >= 0.0f) return;
+    if (dist <= 0.0f) return;
 
     struct Portal* portal = obj->data;
 
@@ -46,7 +46,7 @@ void portal_draw(struct Object* obj, struct RenderBatch* batch, int room) {
     for (int i = 0; i < PORTAL_RESOLUTION; i++) {
         vector_t upPart, rightPart;
 
-        float ang = 2.0f * M_PI * ((float)i / (float)PORTAL_RESOLUTION);
+        float ang = -2.0f * M_PI * ((float)i / (float)PORTAL_RESOLUTION);
         ang += fmodf(portal->openedTime * animDir, 2.0f * M_PI);
 
         float xDist = PORTAL_WIDTH * 0.5f * cosf(ang) * animSize;
@@ -126,14 +126,19 @@ void portal_draw(struct Object* obj, struct RenderBatch* batch, int room) {
         for (int i = 0; i < PORTAL_RESOLUTION; i++) {
             mat_transform_point(portalMatrix, portalPoints[PORTAL_RESOLUTION - 1 - i], &portalPointsTransformed[i]);
         }
+        vector_t linkedportalplane;
+        transform_forward(portal->linked->object.transform, &linkedportalplane);
+        vector_t lpos = portal->linked->object.transform.position;
+        linkedportalplane.w = lpos.x * linkedportalplane.x + lpos.y * linkedportalplane.y + lpos.z * linkedportalplane.z;
+        vector_scale(linkedportalplane, -1.0f, &linkedportalplane);
+
         struct WorldPortalData worldPortal = {
             .roomFrom = portal->object.currentRoom,
             .roomTo = portal->linked->object.currentRoom,
             .verticesCount = PORTAL_RESOLUTION,
             .vertices = portalPointsTransformed,
-            .plane = portalplane,
+            .plane = linkedportalplane,
         };
-        
 
         portal->currentDepth++;
         world_render_custom(obj->world, batch->display, portalCamera, &worldPortal, portalWorldMask);
@@ -167,13 +172,13 @@ void portal_passage_matrix(struct Portal* portal, matrix_t* out)
     transform_world_to_local_matrix(portal->object.transform, &worldToLocalIn);
     transform_local_to_world_matrix(portal->linked->object.transform, &localToWorldOut);
     quaternion_t rotateY;
-    quaternion_axis_angle(180.0f, (vector_t) { 0.0f, 1.0f, 0.0f }, & rotateY);
+    quaternion_axis_angle(180.0f, (vector_t) { 0.0f, 1.0f, 0.0f }, &rotateY);
     mat_rotate(rotateY, &rotateYMat);
 
     matrix_t temp;
+
     mat_mul(localToWorldOut, rotateYMat, &temp);
     mat_mul(temp, worldToLocalIn, out);
-
 }
 
 void portal_set_state(struct Portal* portal, enum PortalState state)
@@ -185,4 +190,50 @@ void portal_set_state(struct Portal* portal, enum PortalState state)
         portal->closedTime = 0.0f;
     }
     portal->state = state;
+}
+
+void portal_place(struct Portal* portal, transform_t transform)
+{
+    if (portal->state == PortalOpen) {
+        portal_set_state(portal, PortalClosed);
+    }
+    portal_set_state(portal, PortalOpen);
+
+    vector_t newPosition;
+
+    vector_t normal;
+    transform_forward(transform, &normal);
+    vector_scale(normal, 0.01f, &newPosition);
+    vector_add(newPosition, transform.position, &newPosition);
+    portal->object.transform = transform;
+}
+
+void portal_shoot(struct Portal* portal, vector_t origin, vector_t dir)
+{
+    struct RayCastHit hit;
+    world_raycast(portal->object.world, origin, dir, 1024, &hit);
+
+    if (hit.type != HitWorld) return;
+  
+    vector_t forwardVec = hit.normal;
+    vector_t upVec = { 0.0f, 1.0f, 0.0f };
+
+    // TODO: fix floor/ceiling portal rendering lol
+    if (fabs(vector_dot(forwardVec, upVec)) > 0.1) {
+        return; // lol no fuck you :)
+    }
+
+    if (fabsf(vector_dot(forwardVec, upVec)) > 0.99) {
+        vector_t rightVec;
+        vector_cross(forwardVec, dir, &rightVec);
+        vector_cross(rightVec, forwardVec, &upVec);
+    }
+
+    quaternion_t rotation;
+    quaternion_look_rotation(forwardVec, upVec, &rotation);
+
+    portal_place(portal, (transform_t) {
+        .position = hit.point,
+        .rotation = rotation
+    });
 }

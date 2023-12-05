@@ -21,6 +21,25 @@ void quaternion_axis_angle(float angle, const vector_t axis, quaternion_t* out)
     out->w = cosf(angleRad / 2.0f);
 }
 
+void quaternion_look_rotation(const vector_t forward, const vector_t up, quaternion_t* out)
+{
+    matrix_t rotMat;
+    mat_identity(&rotMat);
+    vector_t right;
+    vector_cross(up, forward, &right);
+    rotMat.m[0][0] = right.x;
+    rotMat.m[0][1] = right.y;
+    rotMat.m[0][2] = right.z;
+    rotMat.m[1][0] = up.x;
+    rotMat.m[1][1] = up.y;
+    rotMat.m[1][2] = up.z;
+    rotMat.m[2][0] = forward.x;
+    rotMat.m[2][1] = forward.y;
+    rotMat.m[2][2] = forward.z;
+
+    mat_to_quaternion(rotMat, out);
+}
+
 void quaternion_inverse(const quaternion_t in, quaternion_t* out)
 {
     float norm = in.w * in.w + in.x * in.x + in.y * in.y + in.z * in.z;
