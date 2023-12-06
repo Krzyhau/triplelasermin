@@ -107,7 +107,7 @@ void world_render_custom(struct World* world, struct Display* display, struct Ca
         // otherwise, we won't see anything anyway, so just skip it
         vector_t pmask = mainPortal->plane;
         float dist = pmask.x * cp.x + pmask.y * cp.y + pmask.z * cp.z - pmask.w;
-        if (dist <= 0) return;
+        //if (dist <= 0) return;
 
         startingRoom = mainPortal->roomTo;
     }

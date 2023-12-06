@@ -204,7 +204,7 @@ void portal_place(struct Portal* portal, transform_t transform)
     vector_t normal;
     transform_forward(transform, &normal);
     vector_scale(normal, 0.01f, &newPosition);
-    vector_add(newPosition, transform.position, &newPosition);
+    vector_add(newPosition, transform.position, &transform.position);
     portal->object.transform = transform;
 }
 
